@@ -1,6 +1,9 @@
 #include "ManualMap.h"
+#include <cstdio>
+#include <format>
+#include <stdexcept>
 
-#define RELOC_FLAG32(RelInfo) ((RelInfo >> 0x0C) == IMAGE_REL_BASED_HIGHLOW)
+#define RELOC_FLAG(RelInfo) ((RelInfo >> 0x0C) == IMAGE_REL_BASED_HIGHLOW)
 
 using TLoadLibraryA = decltype(LoadLibraryA);
 using TGetProcAddress = decltype(GetProcAddress);
@@ -8,22 +11,28 @@ using TDllMain = BOOL(WINAPI*)(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvRe
 
 struct ManualMapData
 {
-	LPVOID ImageBase;
+	BYTE* ImageBase;
 	HINSTANCE Module;
 
 	TLoadLibraryA* FnLoadLibraryA;
 	TGetProcAddress* FnGetProcAddress;
 };
 
+// Options
+constexpr bool ERASE_PEH = true;
+constexpr bool CLEAR_SECTIONS = true;
+constexpr bool ADJUST_PROTECTION = true;
+
+#pragma runtime_checks( "", off )
 void __stdcall LibraryLoader(ManualMapData* pData)
 {
 	if (!pData)
 	{
-		pData->Module = reinterpret_cast<HINSTANCE>(0x404040);
+		pData->Module = (HINSTANCE)0x404040;
 		return;
 	}
 
-	auto pBase = static_cast<BYTE*>(pData->ImageBase);
+	BYTE* pBase = pData->ImageBase;
 	auto* pOpt = &reinterpret_cast<IMAGE_NT_HEADERS*>(pBase + reinterpret_cast<IMAGE_DOS_HEADER*>((uintptr_t)pBase)->e_lfanew)->OptionalHeader;
 
 	auto _LoadLibraryA = pData->FnLoadLibraryA;
@@ -44,7 +53,7 @@ void __stdcall LibraryLoader(ManualMapData* pData)
 
 				for (UINT i = 0; i != AmountOfEntries; ++i, ++pRelativeInfo)
 				{
-					if (RELOC_FLAG32(*pRelativeInfo))
+					if (RELOC_FLAG(*pRelativeInfo))
 					{
 						auto pPatch = reinterpret_cast<UINT_PTR*>(pBase + pRelocData->VirtualAddress + ((*pRelativeInfo) & 0xFFF));
 						*pPatch += reinterpret_cast<UINT_PTR>(LocationDelta);
@@ -87,7 +96,6 @@ void __stdcall LibraryLoader(ManualMapData* pData)
 		}
 	}
 
-	// Handle TLS callbacks
 	if (pOpt->DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].Size)
 	{
 		auto* pTLS = reinterpret_cast<IMAGE_TLS_DIRECTORY*>(pBase + pOpt->DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress);
@@ -98,21 +106,23 @@ void __stdcall LibraryLoader(ManualMapData* pData)
 		}
 	}
 
-	// Invoke the target DllMain
+	// Invoke original entry point
 	_DllMain(reinterpret_cast<HINSTANCE>(pBase), DLL_PROCESS_ATTACH, nullptr);
 
 	pData->Module = reinterpret_cast<HINSTANCE>(pBase);
 }
+#pragma runtime_checks( "", restore )
 
-constexpr bool ERASE_PEH = true;
-
-bool MM::Inject(HANDLE hTarget, const BinData& data)
+bool MM::Inject(HANDLE hTarget, const BinData& binary)
 {
-	BYTE* pSrcData = data.Data;
+	BYTE* pSrcData = binary.Data;
 
 	// Retrieve the file headers
 	const auto* dosHeader = reinterpret_cast<IMAGE_DOS_HEADER*>(pSrcData);
-	if (dosHeader->e_magic != IMAGE_DOS_SIGNATURE) { return false; }
+	if (dosHeader->e_magic != IMAGE_DOS_SIGNATURE)
+	{
+		throw std::invalid_argument("The file is not a valid PE");
+	}
 
 	const auto* ntHeaders = reinterpret_cast<IMAGE_NT_HEADERS*>(pSrcData + dosHeader->e_lfanew);
 	const IMAGE_FILE_HEADER* fileHeader = &ntHeaders->FileHeader;
@@ -120,82 +130,190 @@ bool MM::Inject(HANDLE hTarget, const BinData& data)
 
 	// Allocate memory for the binary file
 	const auto pTargetBase = static_cast<BYTE*>(VirtualAllocEx(hTarget, nullptr, optHeader->SizeOfImage, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
-	if (!pTargetBase) { return false; }
+	if (!pTargetBase)
+	{
+		throw std::runtime_error("Failed to allocate memory in the target process");
+	}
 
-	DWORD flOldProtect;
+	DWORD flOldProtect = 0;
 	VirtualProtectEx(hTarget, pTargetBase, optHeader->SizeOfImage, PAGE_EXECUTE_READWRITE, &flOldProtect);
 
 	// Init manual map data
-	const ManualMapData mapData {
-		.ImageBase = pTargetBase,
+	ManualMapData data{};
+	data.FnLoadLibraryA = LoadLibraryA;
+	data.FnGetProcAddress = GetProcAddress;
+	data.ImageBase = pTargetBase;
 
-		.FnLoadLibraryA = LoadLibraryA,
-		.FnGetProcAddress = GetProcAddress
-	};
-
-	// Write file header (First 0x1000 bytes)
+	// Write file header (first 0x1000 bytes)
 	if (!WriteProcessMemory(hTarget, pTargetBase, pSrcData, 0x1000, nullptr))
 	{
 		VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
-		return false;
+		throw std::runtime_error("Failed to write PE header");
 	}
 
-	IMAGE_SECTION_HEADER* pSectionHeader = IMAGE_FIRST_SECTION(ntHeaders);
-	for (UINT i = 0; i != fileHeader->NumberOfSections; ++i, ++pSectionHeader) {
-		if (pSectionHeader->SizeOfRawData) {
-			if (!WriteProcessMemory(hTarget, pTargetBase + pSectionHeader->VirtualAddress, pSrcData + pSectionHeader->PointerToRawData, pSectionHeader->SizeOfRawData, nullptr)) {
+	// Write sections
+	auto pSectionHeader = IMAGE_FIRST_SECTION(ntHeaders);
+	for (UINT i = 0; i != fileHeader->NumberOfSections; ++i, ++pSectionHeader)
+	{
+		if (pSectionHeader->SizeOfRawData)
+		{
+			if (!WriteProcessMemory(hTarget, pTargetBase + pSectionHeader->VirtualAddress, pSrcData + pSectionHeader->PointerToRawData, pSectionHeader->SizeOfRawData, nullptr))
+			{
 				VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
-				return false;
+				throw std::runtime_error("Failed to map sections");
 			}
 		}
 	}
 
 	// Write manual map data
-	const auto pMapData = static_cast<ManualMapData*>(VirtualAllocEx(hTarget, nullptr, sizeof(ManualMapData), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
-	if (!pMapData) {
+	const auto pMapData = static_cast<BYTE*>(VirtualAllocEx(hTarget, nullptr, sizeof(ManualMapData), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
+	if (!pMapData)
+	{
 		VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
-		return false;
+		throw std::runtime_error("Failed to allocate manual map data memory");
 	}
 
-	if (!WriteProcessMemory(hTarget, pMapData, &mapData, sizeof(ManualMapData), nullptr)) {
+	if (!WriteProcessMemory(hTarget, pMapData, &data, sizeof(ManualMapData), nullptr))
+	{
 		VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
 		VirtualFreeEx(hTarget, pMapData, 0, MEM_RELEASE);
-		return false;
+		throw std::runtime_error("Failed to write manual map data");
 	}
 
 	// Write library loader
-	const LPVOID pLoader = VirtualAllocEx(hTarget, nullptr, 0x1000, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-	if (!pLoader) {
+	void* pLoader = VirtualAllocEx(hTarget, nullptr, 0x1000, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	if (!pLoader)
+	{
 		VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
 		VirtualFreeEx(hTarget, pMapData, 0, MEM_RELEASE);
-		return false;
+		throw std::runtime_error("Failed to allocate library loader memory");
 	}
 
-	if (!WriteProcessMemory(hTarget, pLoader, LibraryLoader, 0x1000, nullptr)) {
+	if (!WriteProcessMemory(hTarget, pLoader, LibraryLoader, 0x1000, nullptr))
+	{
 		VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
 		VirtualFreeEx(hTarget, pMapData, 0, MEM_RELEASE);
 		VirtualFreeEx(hTarget, pLoader, 0, MEM_RELEASE);
-		return false;
+		throw std::runtime_error("Failed to write library loader");
 	}
-
-	//MessageBoxA(nullptr, "Dll mapped", "Fedoraloader", MB_OK);
 
 	// Run the library loader
 	const HANDLE hThread = CreateRemoteThread(hTarget, nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(pLoader), pMapData, 0, nullptr);
-	if (!hThread) {
+	if (!hThread)
+	{
 		VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
 		VirtualFreeEx(hTarget, pMapData, 0, MEM_RELEASE);
 		VirtualFreeEx(hTarget, pLoader, 0, MEM_RELEASE);
-		return false;
+		throw std::runtime_error("Failed to create the remote thread");
 	}
 	CloseHandle(hThread);
 
-	// Wait for the library loader
-	WaitForSingleObject(hThread, INFINITE);
+	// Wait for the target thread
+	HINSTANCE hCheck = nullptr;
+	while (!hCheck)
+	{
+		DWORD exitcode = 0;
+		GetExitCodeProcess(hTarget, &exitcode);
+		if (exitcode != STILL_ACTIVE)
+		{
+			throw std::runtime_error(std::format("Process crashed with exit code: %d", exitcode));
+		}
+
+		ManualMapData dataChecked{nullptr};
+		ReadProcessMemory(hTarget, pMapData, &dataChecked, sizeof(dataChecked), nullptr);
+		hCheck = dataChecked.Module;
+
+		if (hCheck == reinterpret_cast<HINSTANCE>(0x404040))
+		{
+			VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
+			VirtualFreeEx(hTarget, pMapData, 0, MEM_RELEASE);
+			VirtualFreeEx(hTarget, pLoader, 0, MEM_RELEASE);
+			throw std::runtime_error("Manual map data was invalid");
+		}
+
+		Sleep(10);
+	}
+
+	const auto emptyBuffer = static_cast<BYTE*>(malloc(1024 * 1024 * 20));
+	if (emptyBuffer == nullptr)
+	{
+		throw std::runtime_error("Failed to allocate buffer memory");
+	}
+	memset(emptyBuffer, 0, 1024 * 1024 * 20);
+
+	// (Optional) Clear PE header
+	if (ERASE_PEH)
+	{
+		if (!WriteProcessMemory(hTarget, pTargetBase, emptyBuffer, 0x1000, nullptr))
+		{
+			std::printf("Failed to erase PE header\n");
+		}
+	}
+
+	// (Optional) Clear non-needed sections
+	if (CLEAR_SECTIONS)
+	{
+		pSectionHeader = IMAGE_FIRST_SECTION(ntHeaders);
+		for (UINT i = 0; i != fileHeader->NumberOfSections; ++i, ++pSectionHeader)
+		{
+			if (pSectionHeader->Misc.VirtualSize)
+			{
+				auto sectionName = reinterpret_cast<const char*>(pSectionHeader->Name);
+				if ((strcmp(sectionName, ".pdata") == 0) ||
+					strcmp(sectionName, ".rsrc") == 0 ||
+					strcmp(sectionName, ".reloc") == 0)
+				{
+					if (!WriteProcessMemory(hTarget, pTargetBase + pSectionHeader->VirtualAddress, emptyBuffer, pSectionHeader->Misc.VirtualSize, nullptr))
+					{
+						std::printf("Failed to clear non-needed section %s\n", sectionName);
+					}
+				}
+			}
+		}
+	}
+
+	// (Optional) Adjust the section protection
+	if (ADJUST_PROTECTION)
+	{
+		pSectionHeader = IMAGE_FIRST_SECTION(ntHeaders);
+		for (UINT i = 0; i != fileHeader->NumberOfSections; ++i, ++pSectionHeader)
+		{
+			if (pSectionHeader->Misc.VirtualSize)
+			{
+				DWORD old = 0;
+				DWORD newP = PAGE_READONLY;
+
+				if ((pSectionHeader->Characteristics & IMAGE_SCN_MEM_WRITE) > 0)
+				{
+					newP = PAGE_READWRITE;
+				}
+				else if ((pSectionHeader->Characteristics & IMAGE_SCN_MEM_EXECUTE) > 0)
+				{
+					newP = PAGE_EXECUTE_READ;
+				}
+				if (!VirtualProtectEx(hTarget, pTargetBase + pSectionHeader->VirtualAddress, pSectionHeader->Misc.VirtualSize, newP, &old))
+				{
+					std::printf("Failed to set %s to %lX\n", reinterpret_cast<char*>(pSectionHeader->Name), newP);
+				}
+			}
+		}
+		DWORD old = 0;
+		VirtualProtectEx(hTarget, pTargetBase, IMAGE_FIRST_SECTION(ntHeaders)->VirtualAddress, PAGE_READONLY, &old);
+	}
 
 	// Cleanup
-	VirtualFreeEx(hTarget, pMapData, 0, MEM_RELEASE);
-	VirtualFreeEx(hTarget, pLoader, 0, MEM_RELEASE);
+	if (!WriteProcessMemory(hTarget, pLoader, emptyBuffer, 0x1000, nullptr))
+	{
+		std::printf("Failed to erase library loader\n");
+	}
+	if (!VirtualFreeEx(hTarget, pLoader, 0, MEM_RELEASE))
+	{
+		std::printf("Failed to free library loader memory\n");
+	}
+	if (!VirtualFreeEx(hTarget, pMapData, 0, MEM_RELEASE))
+	{
+		std::printf("Failed to free manual map data memory\n");
+	}
 
 	return true;
 }
