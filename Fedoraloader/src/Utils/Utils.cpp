@@ -23,3 +23,12 @@ DWORD Utils::FindProcess(const char* procName)
 	CloseHandle(hSnapshot);
 	return 0;
 }
+
+HANDLE Utils::GetProcessHandle(const char* procName)
+{
+	const DWORD pid = FindProcess(procName);
+	if (pid == 0) { return nullptr; }
+
+	const HANDLE hProc = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+	return hProc;
+}

@@ -4,4 +4,5 @@
 namespace Loader
 {
 	bool Load(const LaunchInfo& launchInfo);
+	bool Debug(const LaunchInfo& launchInfo);
 }
