@@ -54,13 +54,13 @@ bool Loader::Load(const LaunchInfo& launchInfo)
 	if (pid == 0) { return false; }
 
 	const HANDLE hGame = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
-	if (hGame == INVALID_HANDLE_VALUE) { return false; }
+	if (hGame == INVALID_HANDLE_VALUE || hGame == nullptr) { return false; }
 
 	// Inject the binary
 	bool result;
 	if (launchInfo.Debug)
 	{
-		result = LL::Inject(hGame, binary);
+		result = LL::Inject(hGame, launchInfo.File);
 	}
 	else
 	{

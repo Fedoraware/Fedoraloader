@@ -3,5 +3,5 @@
 
 namespace LL
 {
-	bool Inject(HANDLE hProc, const BinData& data);
+	bool Inject(HANDLE hTarget, LPWSTR fileName);
 }
