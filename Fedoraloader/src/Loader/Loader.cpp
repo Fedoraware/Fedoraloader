@@ -1,6 +1,7 @@
 #include "Loader.h"
 #include "LoadLibrary/LoadLibrary.h"
 #include "ManualMap/ManualMap.h"
+#include "../Utils/Utils.h"
 
 #include <fstream>
 
@@ -38,9 +39,15 @@ BYTE* GetBinary(const LaunchInfo& launchInfo)
 
 bool Loader::Load(const LaunchInfo& launchInfo)
 {
+	// Retrieve the binary
 	const BYTE* binary = GetBinary(launchInfo);
 	if (!binary) { return false; }
 
+	// Find the game
+	const DWORD pid = Utils::FindProcess("hl2.exe");
+	if (pid == 0) { return false; }
+
+	// Inject the binary
 	bool result = false;
 	if (launchInfo.Debug)
 	{

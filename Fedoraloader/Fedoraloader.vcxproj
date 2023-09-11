@@ -86,6 +86,7 @@
     <ClCompile Include="src\Loader\LoadLibrary\LoadLibrary.cpp" />
     <ClCompile Include="src\Loader\ManualMap\ManualMap.cpp" />
     <ClCompile Include="src\Loader\Loader.cpp" />
+    <ClCompile Include="src\Utils\Utils.cpp" />
     <ClCompile Include="src\WinMain.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -94,6 +95,7 @@
     <ClInclude Include="src\Loader\ManualMap\ManualMap.h" />
     <ClInclude Include="src\LaunchInfo.h" />
     <ClInclude Include="src\Loader\Loader.h" />
+    <ClInclude Include="src\Utils\Utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
