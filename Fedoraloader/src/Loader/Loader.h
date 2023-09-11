@@ -3,5 +3,5 @@
 
 namespace Loader
 {
-	int Load(const LaunchInfo& launchInfo);
+	bool Load(const LaunchInfo& launchInfo);
 }

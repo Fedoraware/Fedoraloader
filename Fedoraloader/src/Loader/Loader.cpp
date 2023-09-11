@@ -7,44 +7,47 @@
 
 const char* ACTION_URL = "https://nightly.link/Fedoraware/Fedoraware/workflows/msbuild/main/Fedoraware.zip";
 
-int ReadBinaryFile(LPWSTR fileName, BinData& outData)
+// Reads the given binary file from disk
+BinData ReadBinaryFile(LPWSTR fileName)
 {
 	std::ifstream inFile(fileName, std::ios::binary | std::ios::ate);
-	if (inFile.fail()) { inFile.close(); return -1; }
+	if (inFile.fail()) { inFile.close(); return {}; }
 
 	const auto fileSize = inFile.tellg();
 	BYTE* data = new BYTE[static_cast<size_t>(fileSize)];
-	if (!data) { inFile.close(); return -2; }
+	if (!data) { inFile.close(); return {}; }
 
 	inFile.seekg(0, std::ios::beg);
 	inFile.read(reinterpret_cast<char*>(data), fileSize);
 	inFile.close();
 
-	outData.Data = data;
-	outData.Size = static_cast<size_t>(fileSize);
-	return 0;
+	return {
+		.Data = data,
+		.Size = static_cast<SIZE_T>(fileSize)
+	};
 }
 
-int GetBinary(const LaunchInfo& launchInfo, BinData& outData)
+// Retrieves the Fware binary from web/disk
+BinData GetBinary(const LaunchInfo& launchInfo)
 {
 	if (launchInfo.File)
 	{
-		return ReadBinaryFile(launchInfo.File, outData);
+		return ReadBinaryFile(launchInfo.File);
 	}
 	else
 	{
 		// TODO: Download binary
 	}
 
-	return 0;
+	return {};
 }
 
-int Loader::Load(const LaunchInfo& launchInfo)
+// Loads and injects Fware
+bool Loader::Load(const LaunchInfo& launchInfo)
 {
 	// Retrieve the binary
-	BinData binary{};
-	const int binResult = GetBinary(launchInfo, binary);
-	if (binResult != 0) { return binResult; }
+	const BinData binary = GetBinary(launchInfo);
+	if (!binary.Data) { return false; }
 
 	// Find the game
 	const DWORD pid = Utils::FindProcess("hl2.exe");
