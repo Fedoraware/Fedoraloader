@@ -47,7 +47,7 @@ bool Loader::Load(const LaunchInfo& launchInfo)
 {
 	// Retrieve the binary
 	const BinData binary = GetBinary(launchInfo);
-	if (!binary.Data) { return false; }
+	if (!binary.Data || binary.Size < 0x1000) { return false; }
 
 	// Find the game
 	const HANDLE hGame = Utils::GetProcessHandle("hl2.exe");
