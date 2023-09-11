@@ -10,4 +10,5 @@ struct BinData
 namespace Utils
 {
 	DWORD FindProcess(const char* procName);
+	HANDLE GetProcessHandle(const char* procName);
 }

@@ -50,26 +50,24 @@ bool Loader::Load(const LaunchInfo& launchInfo)
 	if (!binary.Data) { return false; }
 
 	// Find the game
-	const DWORD pid = Utils::FindProcess("hl2.exe");
-	if (pid == 0) { return false; }
-
-	const HANDLE hGame = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+	const HANDLE hGame = Utils::GetProcessHandle("hl2.exe");
 	if (hGame == INVALID_HANDLE_VALUE || hGame == nullptr) { return false; }
 
 	// Inject the binary
-	bool result;
-	if (launchInfo.Debug)
-	{
-		result = LL::Inject(hGame, launchInfo.File);
-	}
-	else
-	{
-		result = MM::Inject();
-	}
-
-	Sleep(3000);
+	const bool result = MM::Inject();
 
 	// Cleanup
 	delete[] binary.Data;
+	return result;
+}
+
+bool Loader::Debug(const LaunchInfo& launchInfo)
+{
+	// Find the game
+	const HANDLE hGame = Utils::GetProcessHandle("hl2.exe");
+	if (hGame == INVALID_HANDLE_VALUE || hGame == nullptr) { return false; }
+
+	// Inject the binary
+	const bool result = LL::Inject(hGame, launchInfo.File);
 	return result;
 }

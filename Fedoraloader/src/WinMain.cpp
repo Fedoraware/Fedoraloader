@@ -31,7 +31,11 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 {
 	const LaunchInfo launchInfo = GetLaunchInfo();
 
-    if (launchInfo.Silent)
+    if (launchInfo.Debug && launchInfo.File)
+    {
+	    Loader::Debug(launchInfo);
+    }
+	else if (launchInfo.Silent)
     {
         Loader::Load(launchInfo);
     }
