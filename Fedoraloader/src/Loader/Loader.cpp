@@ -7,51 +7,57 @@
 
 const char* ACTION_URL = "https://nightly.link/Fedoraware/Fedoraware/workflows/msbuild/main/Fedoraware.zip";
 
-BYTE* ReadBinaryFile(LPWSTR fileName)
+int ReadBinaryFile(LPWSTR fileName, BinData& outData)
 {
 	std::ifstream inFile(fileName, std::ios::binary | std::ios::ate);
-	if (inFile.fail()) { inFile.close(); return nullptr; }
+	if (inFile.fail()) { inFile.close(); return -1; }
 
 	const auto fileSize = inFile.tellg();
 	BYTE* data = new BYTE[static_cast<size_t>(fileSize)];
-	if (!data) { inFile.close(); return nullptr; }
+	if (!data) { inFile.close(); return -2; }
 
 	inFile.seekg(0, std::ios::beg);
 	inFile.read(reinterpret_cast<char*>(data), fileSize);
 	inFile.close();
 
-	return data;
+	outData.Data = data;
+	outData.Size = static_cast<size_t>(fileSize);
+	return 0;
 }
 
-BYTE* GetBinary(const LaunchInfo& launchInfo)
+int GetBinary(const LaunchInfo& launchInfo, BinData& outData)
 {
 	if (launchInfo.File)
 	{
-		return ReadBinaryFile(launchInfo.File);
+		return ReadBinaryFile(launchInfo.File, outData);
 	}
 	else
 	{
 		// TODO: Download binary
 	}
 
-	return nullptr;
+	return 0;
 }
 
-bool Loader::Load(const LaunchInfo& launchInfo)
+int Loader::Load(const LaunchInfo& launchInfo)
 {
 	// Retrieve the binary
-	const BYTE* binary = GetBinary(launchInfo);
-	if (!binary) { return false; }
+	BinData binary{};
+	const int binResult = GetBinary(launchInfo, binary);
+	if (binResult != 0) { return binResult; }
 
 	// Find the game
 	const DWORD pid = Utils::FindProcess("hl2.exe");
 	if (pid == 0) { return false; }
 
+	const HANDLE hGame = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+	if (hGame == INVALID_HANDLE_VALUE) { return false; }
+
 	// Inject the binary
-	bool result = false;
+	bool result;
 	if (launchInfo.Debug)
 	{
-		result = LL::Inject();
+		result = LL::Inject(hGame, binary);
 	}
 	else
 	{
@@ -61,6 +67,6 @@ bool Loader::Load(const LaunchInfo& launchInfo)
 	Sleep(3000);
 
 	// Cleanup
-	delete[] binary;
+	delete[] binary.Data;
 	return result;
 }
