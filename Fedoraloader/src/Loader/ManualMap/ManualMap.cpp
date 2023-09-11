@@ -1,8 +1,15 @@
 #include "ManualMap.h"
 
+using PLoadLibraryA = HMODULE(__stdcall*)(LPCSTR lpLibFileName);
+using PGetProcAddress = FARPROC(__stdcall*)(HMODULE hModule, LPCSTR lpProcName);
+using PDllMain = BOOL(WINAPI*)(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
+
 struct ManualMapData
 {
 	LPVOID ImageBase;
+
+	PLoadLibraryA FnLoadLibraryA;
+	PGetProcAddress FnGetProcAddress;
 };
 
 bool MM::Inject(HANDLE hTarget, const BinData& data)
@@ -25,6 +32,8 @@ bool MM::Inject(HANDLE hTarget, const BinData& data)
 	// Init manual map data
 	ManualMapData mapData = {};
 	mapData.ImageBase = pTargetBase;
+	mapData.FnLoadLibraryA = LoadLibraryA;
+	mapData.FnGetProcAddress = GetProcAddress;
 
 	// Cleanup
 	VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
