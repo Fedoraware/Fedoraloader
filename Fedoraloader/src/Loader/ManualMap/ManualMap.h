@@ -1,6 +1,7 @@
 #pragma once
+#include "../../Utils/Utils.h"
 
 namespace MM
 {
-	bool Inject();
+	bool Inject(HANDLE hTarget, const BinData& data);
 }
