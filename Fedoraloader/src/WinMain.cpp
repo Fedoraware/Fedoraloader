@@ -1,4 +1,6 @@
 #include "Windows.h"
+#include "GUI/GUI.h"
+#include "Loader/Loader.h"
 
 struct LaunchInfo
 {
@@ -31,9 +33,18 @@ LaunchInfo GetLaunchInfo()
     return info;
 }
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nCmdShow)
+int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd)
 {
-    LaunchInfo launchInfo = GetLaunchInfo();
+	const LaunchInfo launchInfo = GetLaunchInfo();
+
+    if (launchInfo.Silent)
+    {
+        Loader::Load();
+    }
+    else
+    {
+	    GUI::Run();
+    }
 
     return 0;
 }

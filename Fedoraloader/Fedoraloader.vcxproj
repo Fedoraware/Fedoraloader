@@ -82,7 +82,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\GUI\GUI.cpp" />
+    <ClCompile Include="src\Loader\Loader.cpp" />
     <ClCompile Include="src\WinMain.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\GUI\GUI.h" />
+    <ClInclude Include="src\Loader\Loader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
