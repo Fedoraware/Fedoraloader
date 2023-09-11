@@ -1,11 +1,10 @@
 #include "GUI.h"
 #include "../Loader/Loader.h"
-#include <Windows.h>
 
-void GUI::Run()
+void GUI::Run(const LaunchInfo& launchInfo)
 {
 	MessageBoxA(nullptr, "Hello, World!", "Fedoraloader", MB_OK);
-	if (!Loader::Load())
+	if (!Loader::Load(launchInfo))
 	{
 		MessageBoxA(nullptr, "Failed to load!", "Fedoraloader", MB_OK);
 	}

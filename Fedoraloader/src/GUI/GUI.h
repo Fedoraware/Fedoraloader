@@ -1,6 +1,7 @@
 #pragma once
+#include "../LaunchInfo.h"
 
 namespace GUI
 {
-	void Run();
+	void Run(const LaunchInfo& launchInfo);
 }

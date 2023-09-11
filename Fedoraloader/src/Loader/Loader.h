@@ -1,6 +1,7 @@
 #pragma once
+#include "../LaunchInfo.h"
 
 namespace Loader
 {
-	bool Load();
+	bool Load(const LaunchInfo& launchInfo);
 }

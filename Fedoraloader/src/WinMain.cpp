@@ -1,13 +1,6 @@
-#include "Windows.h"
+#include "LaunchInfo.h"
 #include "GUI/GUI.h"
 #include "Loader/Loader.h"
-
-struct LaunchInfo
-{
-	bool Silent = false;
-    bool Unprotected = false;
-    LPWSTR File = nullptr;
-};
 
 LaunchInfo GetLaunchInfo()
 {
@@ -21,6 +14,7 @@ LaunchInfo GetLaunchInfo()
 
 	    if (wcscmp(arg, L"-silent") == 0) { info.Silent = true; continue; }
         if (wcscmp(arg, L"-unprotected") == 0) { info.Unprotected = true; continue; }
+        if (wcscmp(arg, L"-debug") == 0) { info.Debug = true; continue; }
 
         if (wcscmp(arg, L"-file") == 0 && i < nArgs - 1)
         {
@@ -39,11 +33,11 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     if (launchInfo.Silent)
     {
-        Loader::Load();
+        Loader::Load(launchInfo);
     }
     else
     {
-	    GUI::Run();
+	    GUI::Run(launchInfo);
     }
 
     return 0;
