@@ -54,7 +54,7 @@ bool Loader::Load(const LaunchInfo& launchInfo)
 	if (hGame == INVALID_HANDLE_VALUE || hGame == nullptr) { return false; }
 
 	// Inject the binary
-	const bool result = MM::Inject();
+	const bool result = MM::Inject(hGame, binary);
 
 	// Cleanup
 	delete[] binary.Data;
