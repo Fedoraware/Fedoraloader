@@ -32,22 +32,26 @@ void __stdcall LibraryLoader(ManualMapData* pData)
 		return;
 	}
 
+	// Retrieve file headers
 	BYTE* pBase = pData->ImageBase;
 	const auto* dosHeader = reinterpret_cast<IMAGE_DOS_HEADER*>(pBase);
 	const auto* ntHeaders = reinterpret_cast<IMAGE_NT_HEADERS*>(pBase + dosHeader->e_lfanew);
 	const IMAGE_OPTIONAL_HEADER* optHeader = &ntHeaders->OptionalHeader;
 
+	// Retrieve our function pointers
 	const auto fnLoadLibraryA = pData->FnLoadLibraryA;
 	const auto fnGetProcAddress = pData->FnGetProcAddress;
 	const auto fnDllMain = reinterpret_cast<TDllMain>(pBase + optHeader->AddressOfEntryPoint);
 
-	BYTE* LocationDelta = pBase - optHeader->ImageBase;
-	if (LocationDelta)
+	// Base address relocation
+	BYTE* locationDelta = pBase - optHeader->ImageBase;
+	if (locationDelta)
 	{
-		if (optHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size)
+		const auto relocData = optHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
+		if (relocData.Size)
 		{
-			auto* pRelocData = reinterpret_cast<IMAGE_BASE_RELOCATION*>(pBase + optHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress);
-			const auto* pRelocEnd = reinterpret_cast<IMAGE_BASE_RELOCATION*>(reinterpret_cast<uintptr_t>(pRelocData) + optHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size);
+			auto* pRelocData = reinterpret_cast<IMAGE_BASE_RELOCATION*>(pBase + relocData.VirtualAddress);
+			const auto* pRelocEnd = reinterpret_cast<IMAGE_BASE_RELOCATION*>(reinterpret_cast<uintptr_t>(pRelocData) + relocData.Size);
 			while (pRelocData < pRelocEnd && pRelocData->SizeOfBlock)
 			{
 				const UINT nEntries = (pRelocData->SizeOfBlock - sizeof(IMAGE_BASE_RELOCATION)) / sizeof(WORD);
@@ -58,7 +62,7 @@ void __stdcall LibraryLoader(ManualMapData* pData)
 					if (RELOC_FLAG(*pRelativeInfo))
 					{
 						const auto pPatch = reinterpret_cast<UINT_PTR*>(pBase + pRelocData->VirtualAddress + ((*pRelativeInfo) & 0xFFF));
-						*pPatch += reinterpret_cast<UINT_PTR>(LocationDelta);
+						*pPatch += reinterpret_cast<UINT_PTR>(locationDelta);
 					}
 				}
 				pRelocData = reinterpret_cast<IMAGE_BASE_RELOCATION*>(reinterpret_cast<BYTE*>(pRelocData) + pRelocData->SizeOfBlock);
@@ -67,9 +71,10 @@ void __stdcall LibraryLoader(ManualMapData* pData)
 	}
 
 	// Resolve imports
-	if (optHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size)
+	const auto importData = optHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
+	if (importData.Size)
 	{
-		const auto* pImportDescr = reinterpret_cast<IMAGE_IMPORT_DESCRIPTOR*>(pBase + optHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress);
+		const auto* pImportDescr = reinterpret_cast<IMAGE_IMPORT_DESCRIPTOR*>(pBase + importData.VirtualAddress);
 		while (pImportDescr->Name)
 		{
 			const auto szMod = reinterpret_cast<char*>(pBase + pImportDescr->Name);
@@ -100,9 +105,10 @@ void __stdcall LibraryLoader(ManualMapData* pData)
 	}
 
 	// Handle TLS callbacks
-	if (optHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].Size)
+	const auto tlsData = optHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS];
+	if (tlsData.Size)
 	{
-		const auto* pTLS = reinterpret_cast<IMAGE_TLS_DIRECTORY*>(pBase + optHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress);
+		const auto* pTLS = reinterpret_cast<IMAGE_TLS_DIRECTORY*>(pBase + tlsData.VirtualAddress);
 		const auto* pCallback = reinterpret_cast<PIMAGE_TLS_CALLBACK*>(pTLS->AddressOfCallBacks);
 		for (; pCallback && *pCallback; ++pCallback)
 		{
