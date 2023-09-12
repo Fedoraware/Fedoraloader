@@ -121,6 +121,8 @@ void __stdcall LibraryLoader(ManualMapData* pData)
 
 	pData->Module = reinterpret_cast<HINSTANCE>(pBase);
 }
+
+DWORD __stdcall Stub() { return 0; }
 #pragma runtime_checks( "", restore )
 
 bool MM::Inject(HANDLE hTarget, const BinData& binary)
@@ -199,7 +201,8 @@ bool MM::Inject(HANDLE hTarget, const BinData& binary)
 		throw std::runtime_error("Failed to allocate library loader memory");
 	}
 
-	if (!WriteProcessMemory(hTarget, pLoader, &LibraryLoader, 0x1000, nullptr))
+	const SIZE_T loaderSize = reinterpret_cast<DWORD>(Stub) - reinterpret_cast<DWORD>(LibraryLoader);
+	if (!WriteProcessMemory(hTarget, pLoader, &LibraryLoader, loaderSize, nullptr))
 	{
 		VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
 		VirtualFreeEx(hTarget, pMapData, 0, MEM_RELEASE);
