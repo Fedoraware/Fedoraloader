@@ -1,6 +1,6 @@
 #include "LoadLibrary.h"
 
-bool LL::Inject(HANDLE hTarget, LPWSTR fileName)
+bool LL::Inject(HANDLE hTarget, LPCWSTR fileName)
 {
 	WCHAR fullPath[MAX_PATH];
 	if (GetFullPathNameW(fileName, MAX_PATH, fullPath, nullptr) == 0)

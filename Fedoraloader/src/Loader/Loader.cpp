@@ -12,7 +12,7 @@ LPCWSTR ACTION_URL = L"https://nightly.link/Fedoraware/Fedoraware/workflows/msbu
 LPCSTR DLL_FILE_NAME = "Fware-Release.dll";
 
 // Reads the given binary file from disk
-BinData ReadBinaryFile(LPWSTR fileName)
+BinData ReadBinaryFile(LPCWSTR fileName)
 {
 	std::ifstream inFile(fileName, std::ios::binary | std::ios::ate);
 	if (inFile.fail()) { inFile.close(); return {}; }

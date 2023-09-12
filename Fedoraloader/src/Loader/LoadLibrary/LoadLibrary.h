@@ -3,5 +3,5 @@
 
 namespace LL
 {
-	bool Inject(HANDLE hTarget, LPWSTR fileName);
+	bool Inject(HANDLE hTarget, LPCWSTR fileName);
 }

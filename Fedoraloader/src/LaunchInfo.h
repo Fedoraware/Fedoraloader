@@ -7,6 +7,6 @@ struct LaunchInfo
     bool Unprotected = false;
     bool Debug = false;
 
-    LPWSTR File = nullptr;
-    LPWSTR URL = nullptr;
+    LPCWSTR File = nullptr;
+    LPCWSTR URL = nullptr;
 };

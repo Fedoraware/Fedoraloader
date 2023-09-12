@@ -15,10 +15,10 @@ BinData Web::DownloadFile(LPCWSTR url)
 		return {};
 	}
 
-	char* fileData = nullptr;
+	BYTE* fileData = nullptr;
 	size_t fileSize = 0;
 
-	char buffer[4096];
+	BYTE buffer[4096];
 	DWORD bytesRead = 0;
 	while (InternetReadFile(hConnect, buffer, sizeof(buffer), &bytesRead))
 	{
@@ -26,7 +26,7 @@ BinData Web::DownloadFile(LPCWSTR url)
 		if (bytesRead == 0) { break; }
 
 		// Allocate more memory
-		fileData = static_cast<char*>(std::realloc(fileData, fileSize + bytesRead));
+		fileData = static_cast<BYTE*>(std::realloc(fileData, fileSize + bytesRead));
 		if (!fileData)
 		{
 			InternetCloseHandle(hConnect);
@@ -45,7 +45,7 @@ BinData Web::DownloadFile(LPCWSTR url)
 	InternetCloseHandle(hInternet);
 
 	return {
-		.Data = reinterpret_cast<BYTE*>(fileData),
+		.Data = fileData,
 		.Size = fileSize
 	};
 }
