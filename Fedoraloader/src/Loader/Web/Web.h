@@ -3,5 +3,5 @@
 
 namespace Web
 {
-	 BinData DownloadFile(LPCWSTR url);
+	 Binary DownloadFile(LPCWSTR url);
 }

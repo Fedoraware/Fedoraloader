@@ -12,9 +12,9 @@ LPCWSTR ACTION_URL = L"https://nightly.link/Fedoraware/Fedoraware/workflows/msbu
 LPCSTR DLL_FILE_NAME = "Fware-Release.dll";
 
 // Retrieves the Fware binary from web/disk
-BinData GetBinary(const LaunchInfo& launchInfo)
+Binary GetBinary(const LaunchInfo& launchInfo)
 {
-	BinData binary;
+	Binary binary;
 
 	// Read the file from web/disk
 	if (launchInfo.File)
@@ -41,10 +41,10 @@ BinData GetBinary(const LaunchInfo& launchInfo)
 bool Loader::Load(const LaunchInfo& launchInfo)
 {
 	// Retrieve the binary
-	const BinData binary = GetBinary(launchInfo);
+	const Binary binary = GetBinary(launchInfo);
 	if (!binary.Data || binary.Size < 0x1000)
 	{
-		throw std::runtime_error("Invalid binary");
+		throw std::runtime_error("Invalid binary file");
 	}
 
 	// Find the game

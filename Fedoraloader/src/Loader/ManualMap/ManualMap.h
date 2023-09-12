@@ -3,5 +3,5 @@
 
 namespace MM
 {
-	bool Inject(HANDLE hTarget, const BinData& binary);
+	bool Inject(HANDLE hTarget, const Binary& binary);
 }

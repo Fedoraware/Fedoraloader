@@ -127,7 +127,7 @@ void __stdcall LibraryLoader(ManualMapData* pData)
 DWORD __stdcall Stub() { return 0; }
 #pragma runtime_checks( "", restore )
 
-bool MM::Inject(HANDLE hTarget, const BinData& binary)
+bool MM::Inject(HANDLE hTarget, const Binary& binary)
 {
 	DWORD flOldProtect = 0;
 	BYTE* pSrcData = binary.Data;

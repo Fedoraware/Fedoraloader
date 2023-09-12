@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <miniz/miniz.h>
 
-void Zip::UnpackFile(BinData& file, const char* fileName)
+void Zip::UnpackFile(Binary& file, const char* fileName)
 {
 	mz_zip_archive zipArchive{};
 

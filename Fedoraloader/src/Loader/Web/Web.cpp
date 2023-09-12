@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <iostream>
 
-BinData Web::DownloadFile(LPCWSTR url)
+Binary Web::DownloadFile(LPCWSTR url)
 {
 	const HINTERNET hInternet = InternetOpenA("HTTP Request", INTERNET_OPEN_TYPE_DIRECT, nullptr, nullptr, 0);
 	if (!hInternet) { return {}; }
