@@ -36,6 +36,12 @@
     <ClCompile Include="src\Loader\Web\Web.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="include\miniz\miniz.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Loader\Zip\Zip.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\GUI\GUI.h">
@@ -57,6 +63,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Loader\Web\Web.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\miniz\miniz.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Loader\Zip\Zip.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

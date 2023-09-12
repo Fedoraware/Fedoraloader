@@ -1,5 +1,6 @@
 #include "Loader.h"
 #include "Web/Web.h"
+#include "Zip/Zip.h"
 #include "LoadLibrary/LoadLibrary.h"
 #include "ManualMap/ManualMap.h"
 #include "../Utils/Utils.h"
@@ -8,6 +9,7 @@
 #include <stdexcept>
 
 LPCWSTR ACTION_URL = L"https://nightly.link/Fedoraware/Fedoraware/workflows/msbuild/main/Fedoraware.zip";
+LPCSTR DLL_FILE_NAME = "Fware-Release.dll";
 
 // Reads the given binary file from disk
 BinData ReadBinaryFile(LPWSTR fileName)
@@ -31,16 +33,16 @@ BinData ReadBinaryFile(LPWSTR fileName)
 
 BinData DownloadBinaryFile(LPCWSTR url)
 {
-	const BinData dlFile = Web::DownloadFile(url);
+	BinData dlFile = Web::DownloadFile(url);
 
 	// Check if the file is packed
 	const auto* dosHeader = reinterpret_cast<IMAGE_DOS_HEADER*>(dlFile.Data);
 	if (dosHeader->e_magic == 0x4B50)
 	{
-		throw std::runtime_error("Archives are not yet supported");
+		Zip::UnpackFile(dlFile, DLL_FILE_NAME);
 	}
 
-	return Web::DownloadFile(url);
+	return dlFile;
 }
 
 // Retrieves the Fware binary from web/disk
