@@ -5,10 +5,10 @@
 
 BinData Web::DownloadFile(LPCWSTR url)
 {
-	HINTERNET hInternet = InternetOpenA("HTTP Request", INTERNET_OPEN_TYPE_DIRECT, nullptr, nullptr, 0);
+	const HINTERNET hInternet = InternetOpenA("HTTP Request", INTERNET_OPEN_TYPE_DIRECT, nullptr, nullptr, 0);
 	if (!hInternet) { return {}; }
 
-	HINTERNET hConnect = InternetOpenUrlW(hInternet, url, nullptr, 0, INTERNET_FLAG_RELOAD, 0);
+	const HINTERNET hConnect = InternetOpenUrlW(hInternet, url, nullptr, 0, INTERNET_FLAG_RELOAD, 0);
 	if (!hConnect)
 	{
 		InternetCloseHandle(hInternet);

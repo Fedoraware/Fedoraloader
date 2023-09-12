@@ -5,6 +5,7 @@
 #include "../Utils/Utils.h"
 
 #include <fstream>
+#include <stdexcept>
 
 LPCWSTR ACTION_URL = L"https://nightly.link/Fedoraware/Fedoraware/workflows/msbuild/main/Fedoraware.zip";
 
@@ -28,6 +29,20 @@ BinData ReadBinaryFile(LPWSTR fileName)
 	};
 }
 
+BinData DownloadBinaryFile(LPCWSTR url)
+{
+	const BinData dlFile = Web::DownloadFile(url);
+
+	// Check if the file is packed
+	const auto* dosHeader = reinterpret_cast<IMAGE_DOS_HEADER*>(dlFile.Data);
+	if (dosHeader->e_magic == 0x4B50)
+	{
+		throw std::runtime_error("Archives are not yet supported");
+	}
+
+	return Web::DownloadFile(url);
+}
+
 // Retrieves the Fware binary from web/disk
 BinData GetBinary(const LaunchInfo& launchInfo)
 {
@@ -35,11 +50,9 @@ BinData GetBinary(const LaunchInfo& launchInfo)
 	{
 		return ReadBinaryFile(launchInfo.File);
 	}
-	else
-	{
-		const LPCWSTR url = launchInfo.URL ? launchInfo.URL : ACTION_URL;
-		return Web::DownloadFile(url);
-	}
+
+	const LPCWSTR url = launchInfo.URL ? launchInfo.URL : ACTION_URL;
+	return DownloadBinaryFile(url);
 }
 
 // Loads and injects Fware
