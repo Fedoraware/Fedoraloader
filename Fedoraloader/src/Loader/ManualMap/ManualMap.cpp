@@ -181,7 +181,7 @@ bool MM::Inject(HANDLE hTarget, const BinData& binary)
 	}
 
 	// Write library loader
-	void* pLoader = VirtualAllocEx(hTarget, nullptr, 0x1000, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	const LPVOID pLoader = VirtualAllocEx(hTarget, nullptr, 0x1000, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 	if (!pLoader)
 	{
 		VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
@@ -189,7 +189,7 @@ bool MM::Inject(HANDLE hTarget, const BinData& binary)
 		throw std::runtime_error("Failed to allocate library loader memory");
 	}
 
-	if (!WriteProcessMemory(hTarget, pLoader, LibraryLoader, 0x1000, nullptr))
+	if (!WriteProcessMemory(hTarget, pLoader, &LibraryLoader, 0x1000, nullptr))
 	{
 		VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
 		VirtualFreeEx(hTarget, pMapData, 0, MEM_RELEASE);
