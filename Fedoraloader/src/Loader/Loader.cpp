@@ -1,11 +1,12 @@
 #include "Loader.h"
+#include "Web/Web.h"
 #include "LoadLibrary/LoadLibrary.h"
 #include "ManualMap/ManualMap.h"
 #include "../Utils/Utils.h"
 
 #include <fstream>
 
-const char* ACTION_URL = "https://nightly.link/Fedoraware/Fedoraware/workflows/msbuild/main/Fedoraware.zip";
+LPCWSTR ACTION_URL = L"https://nightly.link/Fedoraware/Fedoraware/workflows/msbuild/main/Fedoraware.zip";
 
 // Reads the given binary file from disk
 BinData ReadBinaryFile(LPWSTR fileName)
@@ -36,10 +37,9 @@ BinData GetBinary(const LaunchInfo& launchInfo)
 	}
 	else
 	{
-		// TODO: Download binary
+		const LPCWSTR url = launchInfo.URL ? launchInfo.URL : ACTION_URL;
+		return Web::DownloadFile(url);
 	}
-
-	return {};
 }
 
 // Loads and injects Fware

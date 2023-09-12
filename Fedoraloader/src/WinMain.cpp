@@ -8,9 +8,10 @@
 LaunchInfo GetLaunchInfo()
 {
     int nArgs;
-    const LPWSTR* szArglist  =  CommandLineToArgvW(GetCommandLineW(), &nArgs);
-    
-	LaunchInfo info{};
+    LaunchInfo info{};
+    LPWSTR* szArglist  =  CommandLineToArgvW(GetCommandLineW(), &nArgs);
+    if (!szArglist) { return info; }
+	
     for (int i = 0; i < nArgs; i++)
     {
         const auto arg = szArglist[i];
@@ -23,6 +24,7 @@ LaunchInfo GetLaunchInfo()
         CHECK_ARG_STR("-url", info.URL)
     }
 
+    LocalFree(szArglist);
     return info;
 }
 
