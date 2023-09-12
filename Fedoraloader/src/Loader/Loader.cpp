@@ -31,30 +31,30 @@ BinData ReadBinaryFile(LPCWSTR fileName)
 	};
 }
 
-BinData DownloadBinaryFile(LPCWSTR url)
-{
-	BinData dlFile = Web::DownloadFile(url);
-
-	// Check if the file is packed
-	const auto* dosHeader = reinterpret_cast<IMAGE_DOS_HEADER*>(dlFile.Data);
-	if (dosHeader->e_magic == 0x4B50)
-	{
-		Zip::UnpackFile(dlFile, DLL_FILE_NAME);
-	}
-
-	return dlFile;
-}
-
 // Retrieves the Fware binary from web/disk
 BinData GetBinary(const LaunchInfo& launchInfo)
 {
+	BinData binary;
+
+	// Read the file from web/disk
 	if (launchInfo.File)
 	{
-		return ReadBinaryFile(launchInfo.File);
+		binary = ReadBinaryFile(launchInfo.File);
+	}
+	else
+	{
+		const LPCWSTR url = launchInfo.URL ? launchInfo.URL : ACTION_URL;
+		binary = Web::DownloadFile(url);
 	}
 
-	const LPCWSTR url = launchInfo.URL ? launchInfo.URL : ACTION_URL;
-	return DownloadBinaryFile(url);
+	// Check if the file is packed
+	const auto* dosHeader = reinterpret_cast<IMAGE_DOS_HEADER*>(binary.Data);
+	if (dosHeader->e_magic == 0x4B50)
+	{
+		Zip::UnpackFile(binary, DLL_FILE_NAME);
+	}
+
+	return binary;
 }
 
 // Loads and injects Fware
