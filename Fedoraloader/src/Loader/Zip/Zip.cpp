@@ -13,7 +13,7 @@ void Zip::UnpackFile(BinData& file, const char* fileName)
 		throw std::runtime_error("Failed to initialize zip reader");
 	}
 
-	// Find the dll file
+	// Find the dll file | TODO: Look for the first .dll file
 	const int fileIndex = mz_zip_reader_locate_file(&zipArchive, fileName, nullptr, 0);
 	if (fileIndex < 0)
 	{

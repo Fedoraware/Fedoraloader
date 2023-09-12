@@ -1,4 +1,6 @@
 #include "Utils.h"
+
+#include <fstream>
 #include <TlHelp32.h>
 
 DWORD Utils::FindProcess(const char* procName)
@@ -31,4 +33,23 @@ HANDLE Utils::GetProcessHandle(const char* procName)
 
 	const HANDLE hProc = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
 	return hProc;
+}
+
+BinData Utils::ReadBinaryFile(LPCWSTR fileName)
+{
+	std::ifstream inFile(fileName, std::ios::binary | std::ios::ate);
+	if (inFile.fail()) { inFile.close(); return {}; }
+
+	const auto fileSize = inFile.tellg();
+	BYTE* data = new BYTE[static_cast<size_t>(fileSize)];
+	if (!data) { inFile.close(); return {}; }
+
+	inFile.seekg(0, std::ios::beg);
+	inFile.read(reinterpret_cast<char*>(data), fileSize);
+	inFile.close();
+
+	return {
+		.Data = data,
+		.Size = static_cast<SIZE_T>(fileSize)
+	};
 }

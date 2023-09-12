@@ -11,4 +11,5 @@ namespace Utils
 {
 	DWORD FindProcess(const char* procName);
 	HANDLE GetProcessHandle(const char* procName);
+	BinData ReadBinaryFile(LPCWSTR fileName);
 }
