@@ -39,9 +39,9 @@ void __stdcall LibraryLoader(ManualMapData* pData)
 	const IMAGE_OPTIONAL_HEADER* optHeader = &ntHeaders->OptionalHeader;
 
 	// Retrieve our function pointers
-	const auto fnLoadLibraryA = pData->FnLoadLibraryA;
-	const auto fnGetProcAddress = pData->FnGetProcAddress;
-	const auto fnDllMain = reinterpret_cast<TDllMain>(pBase + optHeader->AddressOfEntryPoint);
+	const auto pLoadLibraryA = pData->FnLoadLibraryA;
+	const auto pGetProcAddress = pData->FnGetProcAddress;
+	const auto pDllMain = reinterpret_cast<TDllMain>(pBase + optHeader->AddressOfEntryPoint);
 
 	// Base address relocation
 	BYTE* locationDelta = pBase - optHeader->ImageBase;
@@ -57,7 +57,7 @@ void __stdcall LibraryLoader(ManualMapData* pData)
 				const UINT nEntries = (pRelocData->SizeOfBlock - sizeof(IMAGE_BASE_RELOCATION)) / sizeof(WORD);
 				auto pRelativeInfo = reinterpret_cast<WORD*>(pRelocData + 1);
 
-				for (UINT i = 0; i != nEntries; ++i, ++pRelativeInfo)
+				for (UINT i = 0; i < nEntries; ++i, ++pRelativeInfo)
 				{
 					if (RELOC_FLAG(*pRelativeInfo))
 					{
@@ -78,7 +78,7 @@ void __stdcall LibraryLoader(ManualMapData* pData)
 		while (pImportDescr->Name)
 		{
 			const auto szMod = reinterpret_cast<char*>(pBase + pImportDescr->Name);
-			const HINSTANCE hDll = fnLoadLibraryA(szMod);
+			const HINSTANCE hDll = pLoadLibraryA(szMod);
 
 			auto pThunkRef = reinterpret_cast<ULONG_PTR*>(pBase + pImportDescr->OriginalFirstThunk);
 			auto pFuncRef = reinterpret_cast<ULONG_PTR*>(pBase + pImportDescr->FirstThunk);
@@ -92,12 +92,12 @@ void __stdcall LibraryLoader(ManualMapData* pData)
 			{
 				if (IMAGE_SNAP_BY_ORDINAL(*pThunkRef))
 				{
-					*pFuncRef = reinterpret_cast<ULONG_PTR>(fnGetProcAddress(hDll, reinterpret_cast<char*>(*pThunkRef & 0xFFFF)));
+					*pFuncRef = reinterpret_cast<ULONG_PTR>(pGetProcAddress(hDll, reinterpret_cast<char*>(*pThunkRef & 0xFFFF)));
 				}
 				else
 				{
 					const auto* pImport = reinterpret_cast<IMAGE_IMPORT_BY_NAME*>(pBase + (*pThunkRef));
-					*pFuncRef = reinterpret_cast<ULONG_PTR>(fnGetProcAddress(hDll, pImport->Name));
+					*pFuncRef = reinterpret_cast<ULONG_PTR>(pGetProcAddress(hDll, pImport->Name));
 				}
 			}
 			++pImportDescr;
@@ -110,14 +110,16 @@ void __stdcall LibraryLoader(ManualMapData* pData)
 	{
 		const auto* pTLS = reinterpret_cast<IMAGE_TLS_DIRECTORY*>(pBase + tlsData.VirtualAddress);
 		const auto* pCallback = reinterpret_cast<PIMAGE_TLS_CALLBACK*>(pTLS->AddressOfCallBacks);
-		for (; pCallback && *pCallback; ++pCallback)
+
+		while (pCallback && *pCallback)
 		{
 			(*pCallback)(pBase, DLL_PROCESS_ATTACH, nullptr);
+			pCallback++;
 		}
 	}
 
 	// Invoke original entry point
-	fnDllMain(reinterpret_cast<HINSTANCE>(pBase), DLL_PROCESS_ATTACH, nullptr);
+	pDllMain(reinterpret_cast<HINSTANCE>(pBase), DLL_PROCESS_ATTACH, nullptr);
 
 	pData->Module = reinterpret_cast<HINSTANCE>(pBase);
 }

@@ -2,6 +2,9 @@
 #include "GUI/GUI.h"
 #include "Loader/Loader.h"
 
+#define CHECK_ARG(szArg, bOut) if (wcscmp(arg, L##szArg) == 0) { (bOut) = true; continue; }
+#define CHECK_ARG_STR(szArg, szOut) if (wcscmp(arg, L##szArg) == 0 && i < nArgs - 1) { i++; const auto nextArg = szArglist[i]; (szOut) = nextArg; continue; }
+
 LaunchInfo GetLaunchInfo()
 {
     int nArgs;
@@ -12,16 +15,12 @@ LaunchInfo GetLaunchInfo()
     {
         const auto arg = szArglist[i];
 
-	    if (wcscmp(arg, L"-silent") == 0) { info.Silent = true; continue; }
-        if (wcscmp(arg, L"-unprotected") == 0) { info.Unprotected = true; continue; }
-        if (wcscmp(arg, L"-debug") == 0) { info.Debug = true; continue; }
+        CHECK_ARG("-silent", info.Silent)
+        CHECK_ARG("-unprotected", info.Unprotected)
+        CHECK_ARG("-debug", info.Debug)
 
-        if (wcscmp(arg, L"-file") == 0 && i < nArgs - 1)
-        {
-            i++;
-        	const auto nextArg = szArglist[i];
-            info.File = nextArg;
-        }
+        CHECK_ARG_STR("-file", info.File)
+        CHECK_ARG_STR("-url", info.URL)
     }
 
     return info;
