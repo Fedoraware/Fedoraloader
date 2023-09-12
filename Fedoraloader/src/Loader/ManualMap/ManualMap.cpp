@@ -115,6 +115,7 @@ void __stdcall LibraryLoader(ManualMapData* pData)
 
 bool MM::Inject(HANDLE hTarget, const BinData& binary)
 {
+	DWORD flOldProtect = 0;
 	BYTE* pSrcData = binary.Data;
 
 	// Retrieve the file headers
@@ -135,14 +136,13 @@ bool MM::Inject(HANDLE hTarget, const BinData& binary)
 		throw std::runtime_error("Failed to allocate memory in the target process");
 	}
 
-	DWORD flOldProtect = 0;
 	VirtualProtectEx(hTarget, pTargetBase, optHeader->SizeOfImage, PAGE_EXECUTE_READWRITE, &flOldProtect);
 
 	// Init manual map data
-	ManualMapData data{};
-	data.FnLoadLibraryA = LoadLibraryA;
-	data.FnGetProcAddress = GetProcAddress;
-	data.ImageBase = pTargetBase;
+	ManualMapData mapData{};
+	mapData.FnLoadLibraryA = LoadLibraryA;
+	mapData.FnGetProcAddress = GetProcAddress;
+	mapData.ImageBase = pTargetBase;
 
 	// Write file header (first 0x1000 bytes)
 	if (!WriteProcessMemory(hTarget, pTargetBase, pSrcData, 0x1000, nullptr))
@@ -173,7 +173,7 @@ bool MM::Inject(HANDLE hTarget, const BinData& binary)
 		throw std::runtime_error("Failed to allocate manual map data memory");
 	}
 
-	if (!WriteProcessMemory(hTarget, pMapData, &data, sizeof(ManualMapData), nullptr))
+	if (!WriteProcessMemory(hTarget, pMapData, &mapData, sizeof(ManualMapData), nullptr))
 	{
 		VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
 		VirtualFreeEx(hTarget, pMapData, 0, MEM_RELEASE);
@@ -212,16 +212,17 @@ bool MM::Inject(HANDLE hTarget, const BinData& binary)
 	HINSTANCE hCheck = nullptr;
 	while (!hCheck)
 	{
-		DWORD exitcode = 0;
-		GetExitCodeProcess(hTarget, &exitcode);
-		if (exitcode != STILL_ACTIVE)
+		// Retrieve the exit code
+		DWORD exitCode = 0;
+		GetExitCodeProcess(hTarget, &exitCode);
+		if (exitCode != STILL_ACTIVE)
 		{
-			throw std::runtime_error(std::format("Process crashed with exit code: %d", exitcode));
+			throw std::runtime_error(std::format("Process crashed with exit code: %d", exitCode));
 		}
 
-		ManualMapData dataChecked{nullptr};
-		ReadProcessMemory(hTarget, pMapData, &dataChecked, sizeof(dataChecked), nullptr);
-		hCheck = dataChecked.Module;
+		ManualMapData resultData{};
+		ReadProcessMemory(hTarget, pMapData, &resultData, sizeof(resultData), nullptr);
+		hCheck = resultData.Module;
 
 		if (hCheck == reinterpret_cast<HINSTANCE>(0x404040))
 		{
@@ -234,23 +235,22 @@ bool MM::Inject(HANDLE hTarget, const BinData& binary)
 		Sleep(10);
 	}
 
-	const auto emptyBuffer = static_cast<BYTE*>(malloc(1024 * 1024 * 20));
-	if (emptyBuffer == nullptr)
+	const BYTE* nullBuffer = new BYTE[1024 * 1024 * 20]{};
+	if (nullBuffer == nullptr)
 	{
-		throw std::runtime_error("Failed to allocate buffer memory");
+		throw std::runtime_error("Failed to allocate null buffer");
 	}
-	memset(emptyBuffer, 0, 1024 * 1024 * 20);
 
 	// (Optional) Clear PE header
 	if (ERASE_PEH)
 	{
-		if (!WriteProcessMemory(hTarget, pTargetBase, emptyBuffer, 0x1000, nullptr))
+		if (!WriteProcessMemory(hTarget, pTargetBase, nullBuffer, 0x1000, nullptr))
 		{
 			std::printf("Failed to erase PE header\n");
 		}
 	}
 
-	// (Optional) Clear non-needed sections
+	// (Optional) Clear unneeded sections
 	if (CLEAR_SECTIONS)
 	{
 		pSectionHeader = IMAGE_FIRST_SECTION(ntHeaders);
@@ -258,14 +258,14 @@ bool MM::Inject(HANDLE hTarget, const BinData& binary)
 		{
 			if (pSectionHeader->Misc.VirtualSize)
 			{
-				auto sectionName = reinterpret_cast<const char*>(pSectionHeader->Name);
+				const auto sectionName = reinterpret_cast<const char*>(pSectionHeader->Name);
 				if ((strcmp(sectionName, ".pdata") == 0) ||
 					strcmp(sectionName, ".rsrc") == 0 ||
 					strcmp(sectionName, ".reloc") == 0)
 				{
-					if (!WriteProcessMemory(hTarget, pTargetBase + pSectionHeader->VirtualAddress, emptyBuffer, pSectionHeader->Misc.VirtualSize, nullptr))
+					if (!WriteProcessMemory(hTarget, pTargetBase + pSectionHeader->VirtualAddress, nullBuffer, pSectionHeader->Misc.VirtualSize, nullptr))
 					{
-						std::printf("Failed to clear non-needed section %s\n", sectionName);
+						std::printf("Failed to clear unneeded section %s\n", sectionName);
 					}
 				}
 			}
@@ -280,40 +280,31 @@ bool MM::Inject(HANDLE hTarget, const BinData& binary)
 		{
 			if (pSectionHeader->Misc.VirtualSize)
 			{
-				DWORD old = 0;
-				DWORD newP = PAGE_READONLY;
+				DWORD flNewProtect = PAGE_READONLY;
 
 				if ((pSectionHeader->Characteristics & IMAGE_SCN_MEM_WRITE) > 0)
 				{
-					newP = PAGE_READWRITE;
+					flNewProtect = PAGE_READWRITE;
 				}
 				else if ((pSectionHeader->Characteristics & IMAGE_SCN_MEM_EXECUTE) > 0)
 				{
-					newP = PAGE_EXECUTE_READ;
+					flNewProtect = PAGE_EXECUTE_READ;
 				}
-				if (!VirtualProtectEx(hTarget, pTargetBase + pSectionHeader->VirtualAddress, pSectionHeader->Misc.VirtualSize, newP, &old))
+				if (!VirtualProtectEx(hTarget, pTargetBase + pSectionHeader->VirtualAddress, pSectionHeader->Misc.VirtualSize, flNewProtect, &flOldProtect))
 				{
-					std::printf("Failed to set %s to %lX\n", reinterpret_cast<char*>(pSectionHeader->Name), newP);
+					std::printf("Failed to set %s to %lX\n", reinterpret_cast<char*>(pSectionHeader->Name), flNewProtect);
 				}
 			}
 		}
-		DWORD old = 0;
-		VirtualProtectEx(hTarget, pTargetBase, IMAGE_FIRST_SECTION(ntHeaders)->VirtualAddress, PAGE_READONLY, &old);
+
+		VirtualProtectEx(hTarget, pTargetBase, IMAGE_FIRST_SECTION(ntHeaders)->VirtualAddress, PAGE_READONLY, &flOldProtect);
 	}
 
 	// Cleanup
-	if (!WriteProcessMemory(hTarget, pLoader, emptyBuffer, 0x1000, nullptr))
-	{
-		std::printf("Failed to erase library loader\n");
-	}
-	if (!VirtualFreeEx(hTarget, pLoader, 0, MEM_RELEASE))
-	{
-		std::printf("Failed to free library loader memory\n");
-	}
-	if (!VirtualFreeEx(hTarget, pMapData, 0, MEM_RELEASE))
-	{
-		std::printf("Failed to free manual map data memory\n");
-	}
+	WriteProcessMemory(hTarget, pLoader, nullBuffer, 0x1000, nullptr);
+	VirtualFreeEx(hTarget, pLoader, 0, MEM_RELEASE);
+	VirtualFreeEx(hTarget, pMapData, 0, MEM_RELEASE);
+	delete[] nullBuffer;
 
 	return true;
 }
