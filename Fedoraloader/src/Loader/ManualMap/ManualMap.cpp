@@ -3,7 +3,7 @@
 #include <format>
 #include <stdexcept>
 
-#define RELOC_FLAG(RelInfo) ((RelInfo >> 0x0C) == IMAGE_REL_BASED_HIGHLOW)
+#define RELOC_FLAG(relInfo) (((relInfo) >> 0x0C) == IMAGE_REL_BASED_HIGHLOW)
 
 using TLoadLibraryA = decltype(LoadLibraryA);
 using TGetProcAddress = decltype(GetProcAddress);
@@ -206,6 +206,9 @@ bool MM::Inject(HANDLE hTarget, const BinData& binary)
 		VirtualFreeEx(hTarget, pLoader, 0, MEM_RELEASE);
 		throw std::runtime_error("Failed to create the remote thread");
 	}
+
+	// Wait for the library loader
+	WaitForSingleObject(hThread, 15 * 1000);
 	CloseHandle(hThread);
 
 	// Wait for the target thread
@@ -220,6 +223,7 @@ bool MM::Inject(HANDLE hTarget, const BinData& binary)
 			throw std::runtime_error(std::format("Process crashed with exit code: %d", exitCode));
 		}
 
+		// Read the manual map data
 		ManualMapData resultData{};
 		ReadProcessMemory(hTarget, pMapData, &resultData, sizeof(resultData), nullptr);
 		hCheck = resultData.Module;
