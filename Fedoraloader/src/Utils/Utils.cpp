@@ -36,7 +36,29 @@ HANDLE Utils::GetProcessHandle(const char* procName)
 	return hProc;
 }
 
-HANDLE Utils::WaitForProcess(const char* procName, DWORD sTimeout)
+DWORD Utils::WaitForProcess(const char* procName, DWORD sTimeout)
+{
+	const DWORD startTime = GetTickCount();
+	DWORD processId = 0;
+
+	while (processId == 0)
+	{
+		// Try to get the handle
+		processId = FindProcess(procName);
+		if (processId > 0) { return processId; }
+
+		// Check timeout
+		const DWORD currentTime = GetTickCount();
+        const DWORD elapsedTime = currentTime - startTime;
+		if (elapsedTime >= sTimeout * 1000) { break; }
+
+		Sleep (100);
+	}
+
+	return 0;
+}
+
+HANDLE Utils::WaitForProcessHandle(const char* procName, DWORD sTimeout)
 {
 	const DWORD startTime = GetTickCount();
 	HANDLE hProc = nullptr;
@@ -52,7 +74,7 @@ HANDLE Utils::WaitForProcess(const char* procName, DWORD sTimeout)
         const DWORD elapsedTime = currentTime - startTime;
 		if (elapsedTime >= sTimeout * 1000) { break; }
 
-		Sleep (10);
+		Sleep (100);
 	}
 
 	return nullptr;

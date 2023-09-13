@@ -11,7 +11,8 @@ namespace Utils
 {
 	DWORD FindProcess(const char* procName);
 	HANDLE GetProcessHandle(const char* procName);
-	HANDLE WaitForProcess(const char* procName, DWORD sTimeout = 10);
+	DWORD WaitForProcess(const char* procName, DWORD sTimeout = 10);
+	HANDLE WaitForProcessHandle(const char* procName, DWORD sTimeout = 10);
 	bool WaitCloseProcess(const char* procName, DWORD sTimeout = 10);
 
 	Binary ReadBinaryFile(LPCWSTR fileName);

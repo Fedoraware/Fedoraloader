@@ -65,7 +65,7 @@ bool Loader::Load(const LaunchInfo& launchInfo)
 	}
 
 	// Find the game
-	const HANDLE hGame = Utils::WaitForProcess("hl2.exe", 60);
+	const HANDLE hGame = Utils::WaitForProcessHandle("hl2.exe", 60);
 	if (hGame == INVALID_HANDLE_VALUE || hGame == nullptr)
 	{
 		throw std::runtime_error("Timeout while waiting for game handle");
