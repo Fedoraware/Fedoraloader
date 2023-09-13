@@ -49,7 +49,7 @@ bool Loader::Load(const LaunchInfo& launchInfo)
 		throw std::runtime_error("Invalid binary file");
 	}
 
-	// (Optional) Restart Steam/TF2
+	// (Optional) Restart Steam/TF2 and inject VAC Bypass
 	if (!launchInfo.Unprotected)
 	{
 		// Close Steam and TF2

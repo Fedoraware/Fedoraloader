@@ -29,7 +29,7 @@ void Zip::UnpackFile(Binary& file, const char* fileName)
 	}
 
 	// Extract the dll file
-	const size_t bufferSize = fileStat.m_uncomp_size * sizeof(BYTE);
+	const size_t bufferSize = static_cast<size_t>(fileStat.m_uncomp_size) * sizeof(BYTE);
 	const auto buffer = static_cast<BYTE*>(std::malloc(bufferSize));
 	if (!mz_zip_reader_extract_to_mem(&zipArchive, fileIndex, buffer, bufferSize, 0))
 	{
