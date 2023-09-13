@@ -62,6 +62,11 @@ bool Loader::Load(const LaunchInfo& launchInfo)
 
 		// Run TF2 (and Steam)
 		ShellExecuteA(nullptr, nullptr, "steam://run/440", nullptr, nullptr, SW_SHOWNORMAL);
+
+		// Inject VAC Bypass
+		const HANDLE hSteam = Utils::WaitForProcessHandle("steam.exe", 60);
+		const Binary vacBypass = Utils::GetBinaryResource(IDR_VACBYPASS);
+		MM::Inject(hSteam, vacBypass);
 	}
 
 	// Find the game
