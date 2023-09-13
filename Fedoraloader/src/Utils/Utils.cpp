@@ -57,6 +57,19 @@ HANDLE Utils::WaitForProcess(const char* procName, DWORD sTimeout)
 	return nullptr;
 }
 
+bool Utils::WaitCloseProcess(const char* procName, DWORD sTimeout)
+{
+	const HANDLE hProc = GetProcessHandle(procName);
+	if (hProc == nullptr || hProc == INVALID_HANDLE_VALUE) { return false; }
+
+	// Terminate and wait for exit
+	if (!TerminateProcess(hProc, 0)) { return false; }
+	const DWORD result = WaitForSingleObject(hProc, sTimeout * 1000);
+
+	CloseHandle(hProc);
+	return result == WAIT_OBJECT_0;
+}
+
 Binary Utils::ReadBinaryFile(LPCWSTR fileName)
 {
 	std::ifstream inFile(fileName, std::ios::binary | std::ios::ate);

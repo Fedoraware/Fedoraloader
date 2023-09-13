@@ -7,6 +7,7 @@
 
 #include <fstream>
 #include <stdexcept>
+#include <shellapi.h>
 
 LPCWSTR ACTION_URL = L"https://nightly.link/Fedoraware/Fedoraware/workflows/msbuild/main/Fedoraware.zip";
 LPCSTR DLL_FILE_NAME = "Fware-Release.dll";
@@ -45,6 +46,19 @@ bool Loader::Load(const LaunchInfo& launchInfo)
 	if (!binary.Data || binary.Size < 0x1000)
 	{
 		throw std::runtime_error("Invalid binary file");
+	}
+
+	// (Optional) Restart Steam/TF2
+	if (!launchInfo.Unprotected)
+	{
+		// Close Steam
+		Utils::WaitCloseProcess("hl2.exe");
+		Utils::WaitCloseProcess("steam.exe");
+		Utils::WaitCloseProcess("steamwebhelper.exe");
+
+		Sleep(1000);
+
+		ShellExecuteA(nullptr, nullptr, "steam://run/440", nullptr, nullptr, SW_SHOWNORMAL);
 	}
 
 	// Find the game
