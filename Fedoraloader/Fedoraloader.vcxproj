@@ -103,6 +103,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\miniz\miniz.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="src\GUI\GUI.h" />
     <ClInclude Include="src\Loader\LoadLibrary\LoadLibrary.h" />
     <ClInclude Include="src\Loader\ManualMap\ManualMap.h" />
@@ -111,6 +112,12 @@
     <ClInclude Include="src\Loader\Web\Web.h" />
     <ClInclude Include="src\Loader\Zip\Zip.h" />
     <ClInclude Include="src\Utils\Utils.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\VAC-Bypass.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Fedoraloader.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

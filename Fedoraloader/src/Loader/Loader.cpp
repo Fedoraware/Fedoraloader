@@ -4,6 +4,7 @@
 #include "LoadLibrary/LoadLibrary.h"
 #include "ManualMap/ManualMap.h"
 #include "../Utils/Utils.h"
+#include "../../resource.h"
 
 #include <fstream>
 #include <stdexcept>
@@ -51,13 +52,15 @@ bool Loader::Load(const LaunchInfo& launchInfo)
 	// (Optional) Restart Steam/TF2
 	if (!launchInfo.Unprotected)
 	{
-		// Close Steam
+		// Close Steam and TF2
 		Utils::WaitCloseProcess("hl2.exe");
 		Utils::WaitCloseProcess("steam.exe");
+		Utils::WaitCloseProcess("SteamService.exe");
 		Utils::WaitCloseProcess("steamwebhelper.exe");
 
 		Sleep(1000);
 
+		// Run TF2 (and Steam)
 		ShellExecuteA(nullptr, nullptr, "steam://run/440", nullptr, nullptr, SW_SHOWNORMAL);
 	}
 

@@ -71,5 +71,16 @@
     <ClInclude Include="src\Loader\Zip\Zip.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\VAC-Bypass.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Fedoraloader.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

@@ -15,4 +15,5 @@ namespace Utils
 	bool WaitCloseProcess(const char* procName, DWORD sTimeout = 10);
 
 	Binary ReadBinaryFile(LPCWSTR fileName);
+	Binary GetBinaryResource(WORD id);
 }

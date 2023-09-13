@@ -1,4 +1,5 @@
 #include "Utils.h"
+#include "../resource.h"
 
 #include <fstream>
 #include <TlHelp32.h>
@@ -96,5 +97,21 @@ Binary Utils::ReadBinaryFile(LPCWSTR fileName)
 	return {
 		.Data = data,
 		.Size = static_cast<SIZE_T>(fileSize)
+	};
+}
+
+Binary Utils::GetBinaryResource(WORD id)
+{
+	const HRSRC res = ::FindResource(nullptr, MAKEINTRESOURCE(id), RT_RCDATA);
+	if (!res) { return {}; }
+
+	const SIZE_T resSize = SizeofResource(nullptr, res);
+	const HGLOBAL resData = LoadResource(nullptr, res);
+	if (!resData) { return {}; }
+
+	BYTE* binData = static_cast<BYTE*>(LockResource(resData));
+	return {
+		.Data = binData,
+		.Size = resSize
 	};
 }
