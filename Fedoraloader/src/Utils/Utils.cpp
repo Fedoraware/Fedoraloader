@@ -35,6 +35,28 @@ HANDLE Utils::GetProcessHandle(const char* procName)
 	return hProc;
 }
 
+HANDLE Utils::WaitForProcess(const char* procName, DWORD sTimeout)
+{
+	const DWORD startTime = GetTickCount();
+	HANDLE hProc = nullptr;
+
+	while (!hProc)
+	{
+		// Try to get the handle
+		hProc = GetProcessHandle(procName);
+		if (hProc) { return hProc; }
+
+		// Check timeout
+		const DWORD currentTime = GetTickCount();
+        const DWORD elapsedTime = currentTime - startTime;
+		if (elapsedTime >= sTimeout * 1000) { break; }
+
+		Sleep (10);
+	}
+
+	return nullptr;
+}
+
 Binary Utils::ReadBinaryFile(LPCWSTR fileName)
 {
 	std::ifstream inFile(fileName, std::ios::binary | std::ios::ate);

@@ -48,10 +48,10 @@ bool Loader::Load(const LaunchInfo& launchInfo)
 	}
 
 	// Find the game
-	const HANDLE hGame = Utils::GetProcessHandle("hl2.exe");
+	const HANDLE hGame = Utils::WaitForProcess("hl2.exe", 60);
 	if (hGame == INVALID_HANDLE_VALUE || hGame == nullptr)
 	{
-		throw std::runtime_error("Failed to get game handle");
+		throw std::runtime_error("Timeout while waiting for game handle");
 	}
 
 	// Inject the binary

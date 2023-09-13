@@ -26,8 +26,8 @@ Binary Web::DownloadFile(LPCWSTR url)
 		if (bytesRead == 0) { break; }
 
 		// Allocate more memory
-		fileData = static_cast<BYTE*>(std::realloc(fileData, fileSize + bytesRead));
-		if (!fileData)
+		const auto reFileData = static_cast<BYTE*>(std::realloc(fileData, fileSize + bytesRead));
+		if (!reFileData)
 		{
 			InternetCloseHandle(hConnect);
 			InternetCloseHandle(hInternet);
@@ -35,6 +35,7 @@ Binary Web::DownloadFile(LPCWSTR url)
 		}
 
 		// Copy the buffer
+		fileData = reFileData;
 		std::memcpy(&fileData[fileSize], buffer, bytesRead);
 
 		fileSize += bytesRead;
