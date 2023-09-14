@@ -6,13 +6,16 @@
 Binary Web::DownloadFile(LPCWSTR url)
 {
 	const HINTERNET hInternet = InternetOpenA("HTTP Request", INTERNET_OPEN_TYPE_DIRECT, nullptr, nullptr, 0);
-	if (!hInternet) { return {}; }
+	if (!hInternet)
+	{
+		throw std::runtime_error("Failed to initialize WinINet");
+	}
 
 	const HINTERNET hConnect = InternetOpenUrlW(hInternet, url, nullptr, 0, INTERNET_FLAG_RELOAD, 0);
 	if (!hConnect)
 	{
 		InternetCloseHandle(hInternet);
-		return {};
+		throw std::runtime_error("Failed to open download URL");
 	}
 
 	BYTE* fileData = nullptr;
@@ -29,9 +32,10 @@ Binary Web::DownloadFile(LPCWSTR url)
 		const auto reFileData = static_cast<BYTE*>(std::realloc(fileData, fileSize + bytesRead));
 		if (!reFileData)
 		{
+			std::free(fileData);
 			InternetCloseHandle(hConnect);
 			InternetCloseHandle(hInternet);
-			return {};
+			throw std::runtime_error("Failed to reallocate download buffer");
 		}
 
 		// Copy the buffer

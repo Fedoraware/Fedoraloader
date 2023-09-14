@@ -80,7 +80,7 @@ bool Loader::Load(const LaunchInfo& launchInfo)
 	const bool result = MM::Inject(hGame, binary);
 
 	// Cleanup
-	delete[] binary.Data;
+	std::free(binary.Data);
 	return result;
 }
 
@@ -94,6 +94,5 @@ bool Loader::Debug(const LaunchInfo& launchInfo)
 	}
 
 	// Inject the binary
-	const bool result = LL::Inject(hGame, launchInfo.File);
-	return result;
+	return LL::Inject(hGame, launchInfo.File);
 }

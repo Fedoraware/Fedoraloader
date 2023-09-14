@@ -38,7 +38,7 @@ HANDLE Utils::GetProcessHandle(const char* procName)
 
 DWORD Utils::WaitForProcess(const char* procName, DWORD sTimeout)
 {
-	const DWORD startTime = GetTickCount();
+	const auto startTime = GetTickCount64();
 	DWORD processId = 0;
 
 	while (processId == 0)
@@ -48,9 +48,9 @@ DWORD Utils::WaitForProcess(const char* procName, DWORD sTimeout)
 		if (processId > 0) { return processId; }
 
 		// Check timeout
-		const DWORD currentTime = GetTickCount();
-        const DWORD elapsedTime = currentTime - startTime;
-		if (elapsedTime >= sTimeout * 1000) { break; }
+		const auto currentTime = GetTickCount64();
+        const auto elapsedTime = currentTime - startTime;
+		if (elapsedTime >= static_cast<ULONGLONG>(sTimeout) * 1000) { break; }
 
 		Sleep (100);
 	}
@@ -60,7 +60,7 @@ DWORD Utils::WaitForProcess(const char* procName, DWORD sTimeout)
 
 HANDLE Utils::WaitForProcessHandle(const char* procName, DWORD sTimeout)
 {
-	const DWORD startTime = GetTickCount();
+	const auto startTime = GetTickCount64();
 	HANDLE hProc = nullptr;
 
 	while (!hProc)
@@ -70,9 +70,9 @@ HANDLE Utils::WaitForProcessHandle(const char* procName, DWORD sTimeout)
 		if (hProc) { return hProc; }
 
 		// Check timeout
-		const DWORD currentTime = GetTickCount();
-        const DWORD elapsedTime = currentTime - startTime;
-		if (elapsedTime >= sTimeout * 1000) { break; }
+		const auto currentTime = GetTickCount64();
+        const auto elapsedTime = currentTime - startTime;
+		if (elapsedTime >= static_cast<ULONGLONG>(sTimeout) * 1000) { break; }
 
 		Sleep (100);
 	}
@@ -99,16 +99,16 @@ Binary Utils::ReadBinaryFile(LPCWSTR fileName)
 	if (inFile.fail())
 	{
 		inFile.close();
-		return {};
+		throw std::runtime_error("Failed to open file");
 	}
 
 	// Allocate a buffer
 	const auto fileSize = inFile.tellg();
-	const auto data = new BYTE[static_cast<size_t>(fileSize)];
+	const auto data = static_cast<BYTE*>(std::malloc(static_cast<size_t>(fileSize) * sizeof(BYTE)));
 	if (!data)
 	{
 		inFile.close();
-		return {};
+		throw std::runtime_error("Failed to allocate file buffer");
 	}
 
 	// Read the file
@@ -125,11 +125,17 @@ Binary Utils::ReadBinaryFile(LPCWSTR fileName)
 Binary Utils::GetBinaryResource(WORD id)
 {
 	const HRSRC res = ::FindResource(nullptr, MAKEINTRESOURCE(id), RT_RCDATA);
-	if (!res) { return {}; }
+	if (!res)
+	{
+		throw std::runtime_error("Failed to find resource");
+	}
 
 	const SIZE_T resSize = SizeofResource(nullptr, res);
 	const HGLOBAL resData = LoadResource(nullptr, res);
-	if (!resData) { return {}; }
+	if (!resData)
+	{
+		throw std::runtime_error("Failed to load resource data");
+	}
 
 	BYTE* binData = static_cast<BYTE*>(LockResource(resData));
 	return {

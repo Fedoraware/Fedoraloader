@@ -17,7 +17,7 @@ void Zip::UnpackFile(Binary& file, const char* fileName)
 	const int fileIndex = mz_zip_reader_locate_file(&zipArchive, fileName, nullptr, 0);
 	if (fileIndex < 0)
 	{
-		throw std::runtime_error("Dll file not found");
+		throw std::runtime_error("Dll file not found in archive");
 	}
 
 	// Get dll file info
@@ -25,7 +25,7 @@ void Zip::UnpackFile(Binary& file, const char* fileName)
 	if (!mz_zip_reader_file_stat(&zipArchive, fileIndex, &fileStat))
 	{
 		mz_zip_reader_end(&zipArchive);
-		throw std::runtime_error("Failed to retrieve file info");
+		throw std::runtime_error("Failed to retrieve archive file info");
 	}
 
 	// Extract the dll file
@@ -33,6 +33,7 @@ void Zip::UnpackFile(Binary& file, const char* fileName)
 	const auto buffer = static_cast<BYTE*>(std::malloc(bufferSize));
 	if (!mz_zip_reader_extract_to_mem(&zipArchive, fileIndex, buffer, bufferSize, 0))
 	{
+		std::free(buffer);
 		mz_zip_reader_end(&zipArchive);
 		throw std::runtime_error("Failed to extract file from ZIP");
 	}
