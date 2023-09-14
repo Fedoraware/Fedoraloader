@@ -9,6 +9,9 @@
 
 // Window
 WNDCLASSEX g_WindowClass;
+UINT g_ResizeWidth = 0, g_ResizeHeight = 0;
+POINTS g_DragPos = {};
+constexpr int WINDOW_WIDTH = 400, WINDOW_HEIGHT = 250;
 
 // DirectX
 ID3D11Device* g_Device = nullptr;
@@ -28,13 +31,48 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	switch (uMsg)
 	{
+	case WM_SIZE:
+		if (wParam != SIZE_MINIMIZED)
+		{
+			g_ResizeWidth = LOWORD(lParam);
+			g_ResizeHeight = HIWORD(lParam);
+		}
+		return false;
+
 	case WM_CLOSE:
+		Window::IsRunning = false;
 		DestroyWindow(hWnd);
 		return false;
 
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		return false;
+
+	case WM_LBUTTONDOWN:
+		g_DragPos = MAKEPOINTS(lParam);
+		return false;
+
+	case WM_MOUSEMOVE:
+		if (wParam == MK_LBUTTON)
+		{
+			const auto points = MAKEPOINTS(lParam);
+			RECT rect = {};
+
+			GetWindowRect(Window::WindowHandle, &rect);
+
+			rect.left += points.x - g_DragPos.x;
+			rect.top += points.y - g_DragPos.y;
+
+			SetWindowPos(
+				Window::WindowHandle,
+					HWND_TOPMOST,
+					rect.left,
+					rect.top,
+					0, 0,
+					SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOZORDER
+				);
+		}
+		return 0;
 	}
 
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
@@ -170,7 +208,7 @@ void Window::Create()
 		"Fedoraloader",
 		WS_POPUP,
 		200, 200,
-		400, 250,
+		WINDOW_WIDTH, WINDOW_HEIGHT,
 		nullptr,
 		nullptr,
 		g_WindowClass.hInstance,
@@ -227,6 +265,15 @@ void Window::BeginFrame()
 			IsRunning = false;
 			return;
 		}
+	}
+
+	// Handle window resize
+	if (g_ResizeWidth != 0 && g_ResizeHeight != 0)
+	{
+		CleanupRenderTarget();
+		g_SwapChain->ResizeBuffers(0, g_ResizeWidth, g_ResizeHeight, DXGI_FORMAT_UNKNOWN, 0);
+		g_ResizeWidth = g_ResizeHeight = 0;
+		CreateRenderTarget();
 	}
 
 	// Start the Dear ImGui frame

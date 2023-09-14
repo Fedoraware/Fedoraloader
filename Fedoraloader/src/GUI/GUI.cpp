@@ -33,7 +33,7 @@ void GUI::Run(const LaunchInfo& launchInfo)
 		Render(launchInfo);
 		Window::EndFrame();
 
-		Sleep(1);
+		Sleep(5);
 	}
 
 	Window::Destroy();
