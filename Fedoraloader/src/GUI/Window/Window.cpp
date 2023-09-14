@@ -9,6 +9,7 @@
 
 // Window
 WNDCLASSEX g_WindowClass;
+HWND g_WindowHandle;
 UINT g_ResizeWidth = 0, g_ResizeHeight = 0;
 POINTS g_DragPos = {};
 constexpr int WINDOW_WIDTH = 400, WINDOW_HEIGHT = 250;
@@ -50,6 +51,11 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_LBUTTONDOWN:
 		g_DragPos = MAKEPOINTS(lParam);
+		SetCapture(g_WindowHandle);
+		return false;
+
+	case WM_LBUTTONUP:
+		ReleaseCapture();
 		return false;
 
 	case WM_MOUSEMOVE:
@@ -58,13 +64,13 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			const auto points = MAKEPOINTS(lParam);
 			RECT rect = {};
 
-			GetWindowRect(Window::WindowHandle, &rect);
+			GetWindowRect(g_WindowHandle, &rect);
 
 			rect.left += points.x - g_DragPos.x;
 			rect.top += points.y - g_DragPos.y;
 
 			SetWindowPos(
-				Window::WindowHandle,
+				g_WindowHandle,
 					HWND_TOPMOST,
 					rect.left,
 					rect.top,
@@ -202,7 +208,7 @@ void Window::Create()
 	}
 
 	// Create the window
-	WindowHandle = CreateWindowEx(
+	g_WindowHandle = CreateWindowEx(
 		0,
 		g_WindowClass.lpszClassName,
 		"Fedoraloader",
@@ -215,26 +221,26 @@ void Window::Create()
 		nullptr
 	);
 
-	if (WindowHandle == nullptr || WindowHandle == INVALID_HANDLE_VALUE)
+	if (g_WindowHandle == nullptr || g_WindowHandle == INVALID_HANDLE_VALUE)
 	{
 		throw std::runtime_error("Failed to create window");
 	}
 
 	// Init D3D
-	if (!CreateDeviceD3D(WindowHandle))
+	if (!CreateDeviceD3D(g_WindowHandle))
 	{
-		DestroyWindow(WindowHandle);
+		DestroyWindow(g_WindowHandle);
 		UnregisterClass(g_WindowClass.lpszClassName, g_WindowClass.hInstance);
 		CleanupDeviceD3D();
 		throw std::runtime_error("Failed to create D3D device");
 	}
 
 	// Init ImGui
-	SetupImGui(WindowHandle);
+	SetupImGui(g_WindowHandle);
 
 	// Show the window
-	ShowWindow(WindowHandle, SW_SHOWDEFAULT);
-	UpdateWindow(WindowHandle);
+	ShowWindow(g_WindowHandle, SW_SHOWDEFAULT);
+	UpdateWindow(g_WindowHandle);
 }
 
 void Window::Destroy()
@@ -247,7 +253,7 @@ void Window::Destroy()
 	CleanupDeviceD3D();
 
 	// Destroy Window
-	DestroyWindow(WindowHandle);
+	DestroyWindow(g_WindowHandle);
 	UnregisterClass(g_WindowClass.lpszClassName, g_WindowClass.hInstance);
 }
 
@@ -255,7 +261,7 @@ void Window::BeginFrame()
 {
 	// Handle window messages
 	MSG windowMsg;
-	while (PeekMessage(&windowMsg, WindowHandle, 0, 0, PM_REMOVE))
+	while (PeekMessage(&windowMsg, g_WindowHandle, 0, 0, PM_REMOVE))
 	{
 		TranslateMessage(&windowMsg);
 		DispatchMessage(&windowMsg);

@@ -3,7 +3,6 @@
 
 namespace Window
 {
-	inline HWND WindowHandle;
 	inline bool IsRunning = true;
 
 	void Create();
