@@ -143,3 +143,15 @@ Binary Utils::GetBinaryResource(WORD id)
 		.Size = resSize
 	};
 }
+
+LPCWSTR Utils::CopyString(LPCWSTR src)
+{
+	const SIZE_T size = std::wcslen(src);
+	const auto dest = new WCHAR[size + 1];
+	if (!dest) { return nullptr; }
+
+	const auto err = wcsncpy_s(dest, size + 1, src, size);
+	if (err != 0) { return nullptr; }
+
+	return dest;
+}

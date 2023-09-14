@@ -1,9 +1,12 @@
 #include "LaunchInfo.h"
 #include "GUI/GUI.h"
 #include "Loader/Loader.h"
+#include "Utils/Utils.h"
+
+#include <iostream>
 
 #define CHECK_ARG(szArg, bOut) if (wcscmp(arg, L##szArg) == 0) { (bOut) = true; continue; }
-#define CHECK_ARG_STR(szArg, szOut) if (wcscmp(arg, L##szArg) == 0 && i < nArgs - 1) { i++; const auto nextArg = szArglist[i]; (szOut) = nextArg; continue; }
+#define CHECK_ARG_STR(szArg, szOut) if (wcscmp(arg, L##szArg) == 0 && i < nArgs - 1) { i++; const auto nextArg = szArglist[i]; (szOut) = Utils::CopyString(nextArg); continue; }
 
 LaunchInfo GetLaunchInfo()
 {

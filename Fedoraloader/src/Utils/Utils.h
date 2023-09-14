@@ -17,4 +17,6 @@ namespace Utils
 
 	Binary ReadBinaryFile(LPCWSTR fileName);
 	Binary GetBinaryResource(WORD id);
+
+	LPCWSTR CopyString(LPCWSTR src);
 }
