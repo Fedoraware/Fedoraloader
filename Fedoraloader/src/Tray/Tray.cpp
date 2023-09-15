@@ -3,7 +3,8 @@
 
 #include <stdexcept>
 
-NOTIFYICONDATA niData;
+NOTIFYICONDATA g_NotifyData;
+HINSTANCE g_Instance;
 HWND g_WindowHandle;
 
 constexpr int IDM_LOAD = 102;
@@ -23,20 +24,21 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 	// Initialize icon
 	case WM_CREATE:
-		niData = {};
-		niData.cbSize = sizeof niData;
-		niData.hWnd = hWnd;
-		niData.uID = 1;
-		niData.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
-		niData.uCallbackMessage = WM_USER + 1;
-		niData.hIcon = LoadIcon(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDI_APPLICATION));
-		lstrcpy(niData.szTip, TEXT("Fedoraloader"));
-		Shell_NotifyIcon(NIM_ADD, &niData);
+		g_NotifyData = {};
+		g_NotifyData.cbSize = sizeof g_NotifyData;
+		g_NotifyData.hWnd = hWnd;
+		g_NotifyData.uID = 1;
+		g_NotifyData.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
+		g_NotifyData.uCallbackMessage = WM_USER + 1;
+		g_NotifyData.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
+		lstrcpy(g_NotifyData.szTip, TEXT("Fedoraloader"));
+
+		Shell_NotifyIcon(NIM_ADD, &g_NotifyData);
 		return false;
 
 	// Create the menu
 	case WM_USER + 1:
-		if (lParam == WM_RBUTTONDOWN || lParam == WM_CONTEXTMENU) // TODO: RBUTTONUP?
+		if (lParam == WM_RBUTTONUP || lParam == WM_LBUTTONUP || lParam == WM_CONTEXTMENU)
 		{
 			const HMENU hPopup = CreatePopupMenu();
 			AppendMenu(hPopup, MF_STRING, IDM_LOAD, TEXT("Load"));
@@ -66,7 +68,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	// Destroy the icon
 	case WM_DESTROY:
-		Shell_NotifyIcon(NIM_DELETE, &niData);
+		Shell_NotifyIcon(NIM_DELETE, &g_NotifyData);
 		PostQuitMessage(0);
 		return false;
 	}
@@ -93,6 +95,7 @@ void CreateTray(HINSTANCE hInstance)
 
 void Tray::Run(const LaunchInfo& launchInfo, HINSTANCE hInstance)
 {
+	g_Instance = hInstance;
 	CreateTray(hInstance);
 
 	// Message loop
