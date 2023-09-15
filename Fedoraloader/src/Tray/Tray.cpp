@@ -1,19 +1,24 @@
 #include "Tray.h"
+
+#include <functional>
+
 #include "../resource.h"
 #include "../Utils/Utils.h"
 #include "../Loader/Loader.h"
 
 #include <stdexcept>
+#include <unordered_map>
 
 #define WM_TRAY (WM_USER + 1)
 
 NOTIFYICONDATA g_NotifyData;
-HINSTANCE g_Instance;
 WNDCLASS g_WindowClass;
 HWND g_WindowHandle;
 
 constexpr int IDM_LOAD = 111;
 constexpr int IDM_EXIT = 112;
+
+std::unordered_map<int, std::function<void()>> g_MenuCallbacks;
 
 namespace Callbacks
 {
@@ -35,7 +40,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		g_NotifyData.uID = 1;
 		g_NotifyData.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
 		g_NotifyData.uCallbackMessage = WM_USER + 1;
-		g_NotifyData.hIcon = LoadIcon(g_Instance, MAKEINTRESOURCE(IDR_ICON));
+		g_NotifyData.hIcon = LoadIcon(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDR_ICON));
 		lstrcpy(g_NotifyData.szTip, TEXT("Fedoraloader"));
 
 		Shell_NotifyIcon(NIM_ADD, &g_NotifyData);
@@ -61,15 +66,14 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	// Handle buttons
 	case WM_COMMAND:
-		switch (LOWORD(wParam))
 		{
-		case IDM_LOAD:
-			Callbacks::OnLoad();
-			break;
-
-		case IDM_EXIT:
-			PostQuitMessage(0);
-			break;
+			const int itemId = LOWORD(wParam);
+			const auto it = g_MenuCallbacks.find(itemId);
+            if (it != g_MenuCallbacks.end())
+			{
+                // Call the associated callback function
+                it->second();
+            }
 		}
 		return false;
 
@@ -102,7 +106,18 @@ void CreateTray(HINSTANCE hInstance)
 
 void Tray::Run(const LaunchInfo& launchInfo, HINSTANCE hInstance)
 {
-	g_Instance = hInstance;
+	// Register callbacks
+	g_MenuCallbacks[IDM_LOAD] = [launchInfo]
+	{
+		Loader::Load(launchInfo);
+	};
+
+	g_MenuCallbacks[IDM_EXIT] = []
+	{
+		PostQuitMessage(0);
+	};
+
+	// Create tray window
 	CreateTray(hInstance);
 
 	// Message loop
