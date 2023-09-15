@@ -119,6 +119,9 @@
   <ItemGroup>
     <ResourceCompile Include="Fedoraloader.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\Icon.ico" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

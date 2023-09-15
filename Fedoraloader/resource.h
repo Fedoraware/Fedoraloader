@@ -14,3 +14,4 @@
 #endif
 
 #define IDR_VACBYPASS 101
+#define IDR_ICON 102

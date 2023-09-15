@@ -1,16 +1,19 @@
 #include "Tray.h"
+#include "../resource.h"
 #include "../Utils/Utils.h"
+#include "../Loader/Loader.h"
 
 #include <stdexcept>
 
 #define WM_TRAY (WM_USER + 1)
 
 NOTIFYICONDATA g_NotifyData;
+HINSTANCE g_Instance;
 WNDCLASS g_WindowClass;
 HWND g_WindowHandle;
 
-constexpr int IDM_LOAD = 102;
-constexpr int IDM_EXIT = 103;
+constexpr int IDM_LOAD = 111;
+constexpr int IDM_EXIT = 112;
 
 namespace Callbacks
 {
@@ -32,7 +35,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		g_NotifyData.uID = 1;
 		g_NotifyData.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
 		g_NotifyData.uCallbackMessage = WM_USER + 1;
-		g_NotifyData.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
+		g_NotifyData.hIcon = LoadIcon(g_Instance, MAKEINTRESOURCE(IDR_ICON));
 		lstrcpy(g_NotifyData.szTip, TEXT("Fedoraloader"));
 
 		Shell_NotifyIcon(NIM_ADD, &g_NotifyData);
@@ -99,6 +102,7 @@ void CreateTray(HINSTANCE hInstance)
 
 void Tray::Run(const LaunchInfo& launchInfo, HINSTANCE hInstance)
 {
+	g_Instance = hInstance;
 	CreateTray(hInstance);
 
 	// Message loop
@@ -109,5 +113,6 @@ void Tray::Run(const LaunchInfo& launchInfo, HINSTANCE hInstance)
         DispatchMessage(&windowMsg);
     }
 
+	// Cleanup
 	UnregisterClass(g_WindowClass.lpszClassName, g_WindowClass.hInstance);
 }
