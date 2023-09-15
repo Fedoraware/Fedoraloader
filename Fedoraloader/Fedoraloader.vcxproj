@@ -92,25 +92,25 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="include\miniz\miniz.c" />
-    <ClCompile Include="src\GUI\GUI.cpp" />
     <ClCompile Include="src\Loader\LoadLibrary\LoadLibrary.cpp" />
     <ClCompile Include="src\Loader\ManualMap\ManualMap.cpp" />
     <ClCompile Include="src\Loader\Loader.cpp" />
     <ClCompile Include="src\Loader\Web\Web.cpp" />
     <ClCompile Include="src\Loader\Zip\Zip.cpp" />
+    <ClCompile Include="src\Tray\Tray.cpp" />
     <ClCompile Include="src\Utils\Utils.cpp" />
     <ClCompile Include="src\WinMain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\miniz\miniz.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="src\GUI\GUI.h" />
     <ClInclude Include="src\Loader\LoadLibrary\LoadLibrary.h" />
     <ClInclude Include="src\Loader\ManualMap\ManualMap.h" />
     <ClInclude Include="src\LaunchInfo.h" />
     <ClInclude Include="src\Loader\Loader.h" />
     <ClInclude Include="src\Loader\Web\Web.h" />
     <ClInclude Include="src\Loader\Zip\Zip.h" />
+    <ClInclude Include="src\Tray\Tray.h" />
     <ClInclude Include="src\Utils\Utils.h" />
   </ItemGroup>
   <ItemGroup>
