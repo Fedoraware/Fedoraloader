@@ -3,8 +3,10 @@
 
 #include <stdexcept>
 
+#define WM_TRAY (WM_USER + 1)
+
 NOTIFYICONDATA g_NotifyData;
-HINSTANCE g_Instance;
+WNDCLASS g_WindowClass;
 HWND g_WindowHandle;
 
 constexpr int IDM_LOAD = 102;
@@ -37,9 +39,11 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		return false;
 
 	// Create the menu
-	case WM_USER + 1:
+	case WM_TRAY:
 		if (lParam == WM_RBUTTONUP || lParam == WM_LBUTTONUP || lParam == WM_CONTEXTMENU)
 		{
+			SetForegroundWindow(g_WindowHandle);
+
 			const HMENU hPopup = CreatePopupMenu();
 			AppendMenu(hPopup, MF_STRING, IDM_LOAD, TEXT("Load"));
 			AppendMenu(hPopup, MF_SEPARATOR, 1, nullptr);
@@ -79,14 +83,14 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 void CreateTray(HINSTANCE hInstance)
 {
 	// Create the window class
-	WNDCLASS wc = {};
-    wc.lpfnWndProc = WindowProc;
-    wc.hInstance = hInstance;
-    wc.lpszClassName = TEXT("fl001");
-    RegisterClass(&wc);
+	g_WindowClass = {};
+    g_WindowClass.lpfnWndProc = WindowProc;
+    g_WindowClass.hInstance = hInstance;
+    g_WindowClass.lpszClassName = TEXT("fl001");
+    RegisterClass(&g_WindowClass);
 
 	// Create the main window (hidden)
-    g_WindowHandle = CreateWindow(wc.lpszClassName, TEXT("Fedoraloader"), 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, hInstance, NULL);
+    g_WindowHandle = CreateWindow(g_WindowClass.lpszClassName, TEXT("Fedoraloader"), 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, hInstance, NULL);
 	if (g_WindowHandle == nullptr || g_WindowHandle == INVALID_HANDLE_VALUE)
 	{
 		throw std::runtime_error("Failed to create tray window");
@@ -95,7 +99,6 @@ void CreateTray(HINSTANCE hInstance)
 
 void Tray::Run(const LaunchInfo& launchInfo, HINSTANCE hInstance)
 {
-	g_Instance = hInstance;
 	CreateTray(hInstance);
 
 	// Message loop
@@ -105,4 +108,6 @@ void Tray::Run(const LaunchInfo& launchInfo, HINSTANCE hInstance)
         TranslateMessage(&windowMsg);
         DispatchMessage(&windowMsg);
     }
+
+	UnregisterClass(g_WindowClass.lpszClassName, g_WindowClass.hInstance);
 }
