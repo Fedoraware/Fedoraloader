@@ -11,6 +11,17 @@
 
 #define WM_TRAY (WM_USER + 1)
 
+enum class PreferredAppMode
+{
+   Default,
+   AllowDark,
+   ForceDark,
+   ForceLight,
+   Max
+};
+
+using TSetPreferredAppMode = PreferredAppMode(WINAPI)(PreferredAppMode appMode);
+
 // Action IDs
 enum ACTION_ID {
 	IDM_FIRST = 110,
@@ -106,6 +117,31 @@ BOOL ShowNotification(LPCSTR title, LPCSTR text, DWORD flags = NIIF_INFO)
 	return Shell_NotifyIcon(NIM_MODIFY, &g_NotifyData);
 }
 
+void SetPreferredAppMode(PreferredAppMode mode)
+{
+	// Only supported for build 18362 and higher
+	DWORD minor, major, buildNumber;
+	Utils::GetVersionNumbers(&minor, &major, &buildNumber);
+	if (buildNumber < 18362) { return; }
+
+	static TSetPreferredAppMode* pSetPreferredAppMode = nullptr;
+	if (pSetPreferredAppMode == nullptr)
+	{
+		const HMODULE hUxTheme = LoadLibraryEx("uxtheme.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
+		if (hUxTheme == nullptr) { return; }
+
+		const auto ord135 = GetProcAddress(hUxTheme, MAKEINTRESOURCEA(135));
+		if (ord135 == nullptr) { return; }
+
+		pSetPreferredAppMode = reinterpret_cast<TSetPreferredAppMode*>(ord135);
+		if (!pSetPreferredAppMode) { return; }
+
+		FreeLibrary(hUxTheme);
+	}
+
+	pSetPreferredAppMode(mode);
+}
+
 void CreateTray(HINSTANCE hInstance)
 {
 	// Create the window class
@@ -125,6 +161,10 @@ void CreateTray(HINSTANCE hInstance)
 	{
 		throw std::runtime_error("Failed to create tray window");
 	}
+
+	// Allow dark mode
+	SetPreferredAppMode(PreferredAppMode::AllowDark);
+	SetPreferredAppMode(PreferredAppMode::AllowDark);
 }
 
 void LoadSafe(const LaunchInfo& launchInfo)

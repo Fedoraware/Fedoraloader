@@ -155,3 +155,20 @@ LPCWSTR Utils::CopyString(LPCWSTR src)
 
 	return dest;
 }
+
+void Utils::GetVersionNumbers(LPDWORD major, LPDWORD minor, LPDWORD build)
+{
+	using TRtlGetNtVersionNumbers = void (WINAPI)(LPDWORD, LPDWORD, LPDWORD);
+	static TRtlGetNtVersionNumbers* fn = nullptr;
+	if (fn == nullptr)
+	{
+		const auto hMod = GetModuleHandle("ntdll.dll");
+		if (hMod == nullptr) { return; }
+
+		fn = reinterpret_cast<TRtlGetNtVersionNumbers*>(GetProcAddress(hMod, "RtlGetNtVersionNumbers"));
+		if (fn == nullptr) { return; }
+	}
+
+	fn(major, minor, build);
+	*build &= ~0xF0000000;
+}

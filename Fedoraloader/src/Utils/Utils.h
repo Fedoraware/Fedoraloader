@@ -19,4 +19,5 @@ namespace Utils
 	Binary GetBinaryResource(WORD id);
 
 	LPCWSTR CopyString(LPCWSTR src);
+	void GetVersionNumbers(LPDWORD major, LPDWORD minor, LPDWORD build);
 }
