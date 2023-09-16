@@ -15,18 +15,11 @@ NOTIFYICONDATA g_NotifyData;
 WNDCLASS g_WindowClass;
 HWND g_WindowHandle;
 
+// Action IDsSh
 constexpr int IDM_LOAD = 111;
 constexpr int IDM_EXIT = 112;
 
 std::unordered_map<int, std::function<void()>> g_MenuCallbacks;
-
-namespace Callbacks
-{
-	void OnLoad()
-	{
-		MessageBox(nullptr, "Loading...", "Fedoralaoder", MB_OK);
-	}
-}
 
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -58,9 +51,9 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			AppendMenu(hPopup, MF_STRING, IDM_EXIT, TEXT("Exit"));
 
 			POINT pt;
-            GetCursorPos(&pt);
-            TrackPopupMenu(hPopup, TPM_RIGHTBUTTON, pt.x, pt.y, 0, g_WindowHandle, nullptr);
-            DestroyMenu(hPopup);
+			GetCursorPos(&pt);
+			TrackPopupMenu(hPopup, TPM_RIGHTBUTTON, pt.x, pt.y, 0, g_WindowHandle, nullptr);
+			DestroyMenu(hPopup);
 		}
 		return false;
 
@@ -68,12 +61,11 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_COMMAND:
 		{
 			const int itemId = LOWORD(wParam);
-			const auto it = g_MenuCallbacks.find(itemId);
-            if (it != g_MenuCallbacks.end())
+			const auto callback = g_MenuCallbacks.find(itemId);
+			if (callback != g_MenuCallbacks.end())
 			{
-                // Call the associated callback function
-                it->second();
-            }
+				callback->second();
+			}
 		}
 		return false;
 
@@ -91,22 +83,21 @@ void CreateTray(HINSTANCE hInstance)
 {
 	// Create the window class
 	g_WindowClass = {};
-    g_WindowClass.lpfnWndProc = WindowProc;
-    g_WindowClass.hInstance = hInstance;
-    g_WindowClass.lpszClassName = TEXT("fl001");
-    RegisterClass(&g_WindowClass);
+	g_WindowClass.lpfnWndProc = WindowProc;
+	g_WindowClass.hInstance = hInstance;
+	g_WindowClass.lpszClassName = TEXT("fl001");
+	RegisterClass(&g_WindowClass);
 
 	// Create the main window (hidden)
-    g_WindowHandle = CreateWindow(g_WindowClass.lpszClassName, TEXT("Fedoraloader"), 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, hInstance, NULL);
+	g_WindowHandle = CreateWindow(g_WindowClass.lpszClassName, TEXT("Fedoraloader"), 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, hInstance, NULL);
 	if (g_WindowHandle == nullptr || g_WindowHandle == INVALID_HANDLE_VALUE)
 	{
 		throw std::runtime_error("Failed to create tray window");
 	}
 }
 
-void Tray::Run(const LaunchInfo& launchInfo, HINSTANCE hInstance)
+void RegisterCallbacks(const LaunchInfo& launchInfo)
 {
-	// Register callbacks
 	g_MenuCallbacks[IDM_LOAD] = [launchInfo]
 	{
 		Loader::Load(launchInfo);
@@ -116,17 +107,21 @@ void Tray::Run(const LaunchInfo& launchInfo, HINSTANCE hInstance)
 	{
 		PostQuitMessage(0);
 	};
+}
 
-	// Create tray window
+void Tray::Run(const LaunchInfo& launchInfo, HINSTANCE hInstance)
+{
+	// Create tray menu
+	RegisterCallbacks(launchInfo);
 	CreateTray(hInstance);
 
 	// Message loop
-    MSG windowMsg;
-    while (GetMessage(&windowMsg, nullptr, 0, 0))
+	MSG windowMsg;
+	while (GetMessage(&windowMsg, nullptr, 0, 0))
 	{
-        TranslateMessage(&windowMsg);
-        DispatchMessage(&windowMsg);
-    }
+		TranslateMessage(&windowMsg);
+		DispatchMessage(&windowMsg);
+	}
 
 	// Cleanup
 	UnregisterClass(g_WindowClass.lpszClassName, g_WindowClass.hInstance);
