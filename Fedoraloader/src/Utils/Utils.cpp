@@ -137,7 +137,7 @@ Binary Utils::GetBinaryResource(WORD id)
 		throw std::runtime_error("Failed to load resource data");
 	}
 
-	auto binData = static_cast<BYTE*>(LockResource(resData));
+	const auto binData = static_cast<BYTE*>(LockResource(resData));
 	return {
 		.Data = binData,
 		.Size = resSize

@@ -19,6 +19,9 @@ bool LL::Inject(HANDLE hTarget, LPCWSTR fileName)
 	const HANDLE hThread = CreateRemoteThread(hTarget, nullptr, NULL, reinterpret_cast<LPTHREAD_START_ROUTINE>(LoadLibraryW), lpPathAddress, NULL, nullptr);
 	if (!hThread) { return false; }
 
+	// Wait for thread
+	WaitForSingleObject(hThread, 15 * 1000);
+
 	// Cleanup
 	CloseHandle(hTarget);
 	VirtualFreeEx(hTarget, lpPathAddress, 0, MEM_RELEASE);
