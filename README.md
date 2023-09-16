@@ -3,12 +3,36 @@
 Fedoraloader is an easy-to-use loader for the free and open-source cheat [Fedoraware](https://github.com/Fedoraware/Fedoraware).
 It automatically download and injects the latest Fedoraware build into your game.
 
+This is a complete C++ rewrite of the old Fedoraloader, which was written in C#.
+
 ## Usage
 
-- **Add the loader to you anti virus exceptions!**
 - Run Fedoraloader as administrator
-- ???
-- Profit
+- Right click on the tray icon to open the menu
+- Click **Load** or **Load + Exit**
+
+![](.github/assets/Preview.png)
+
+## FAQ
+
+### How do I fix "MSVCP140. dll not installed"?
+
+Download and install the [Microsoft Visual C++ Redistributable for Visual Studio 2015, 2017 and 2019](https://aka.ms/vs/17/release/vc_redist.x86.exe).
+
+### Do I need to update the loader?
+
+No, the loader will automatically download the latest Fedoraware build.
+You only need to re-download the loader if a significant change was made to it.
+
+### Why did the file disappear?
+
+You need to add the loader file to your antivirus' exception list or disable it completely.
+This is a false positive due to the nature of injectors and their similarity to malware.
+
+### Where does it download the file from?
+
+We're using [nightly.link](https://nightly.link/) to retrieve the latest [GitHub artifact](https://github.com/Fedoraware/Fedoraware/actions).
+This service allows us to download the file without requiring a GitHub account.
 
 ## Options
 

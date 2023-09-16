@@ -49,7 +49,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			g_NotifyData.cbSize = sizeof g_NotifyData;
 			g_NotifyData.hWnd = hWnd;
 			g_NotifyData.uID = 1;
-			g_NotifyData.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP | NIF_INFO;
+			g_NotifyData.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP | NIF_INFO | NIF_REALTIME;
 			g_NotifyData.uCallbackMessage = WM_USER + 1;
 			g_NotifyData.hIcon = LoadIcon(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDR_ICON));
 			lstrcpy(g_NotifyData.szTip, TEXT("Fedoraloader"));
