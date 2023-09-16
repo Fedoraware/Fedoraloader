@@ -33,7 +33,6 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		g_NotifyData.hWnd = hWnd;
 		g_NotifyData.uID = 1;
 		g_NotifyData.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP | NIF_INFO;
-		g_NotifyData.dwInfoFlags = NIIF_INFO;
 		g_NotifyData.uCallbackMessage = WM_USER + 1;
 		g_NotifyData.hIcon = LoadIcon(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDR_ICON));
 		lstrcpy(g_NotifyData.szTip, TEXT("Fedoraloader"));
@@ -86,10 +85,11 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
-BOOL ShowNotification(LPCSTR title, LPCSTR text)
+BOOL ShowNotification(LPCSTR title, LPCSTR text, DWORD flags = NIIF_INFO)
 {
 	lstrcpy(g_NotifyData.szInfoTitle, title);
     lstrcpy(g_NotifyData.szInfo, text);
+	g_NotifyData.dwInfoFlags = flags;
 
     return Shell_NotifyIcon(NIM_MODIFY, &g_NotifyData);
 }
@@ -129,11 +129,11 @@ void RegisterCallbacks(const LaunchInfo& launchInfo)
 		}
 		catch (const std::exception& ex)
 		{
-			ShowNotification("Error", ex.what());
+			ShowNotification("Error", ex.what(), NIIF_ERROR);
 		}
 		catch (...)
 		{
-			ShowNotification("Unexpected Error", "What did you do?");
+			ShowNotification("Unexpected Error", "What did you do?", NIIF_ERROR);
 		}
 	};
 
