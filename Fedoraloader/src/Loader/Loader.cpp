@@ -42,8 +42,6 @@ Binary GetBinary(const LaunchInfo& launchInfo)
 // Loads and injects Fware
 bool Loader::Load(const LaunchInfo& launchInfo)
 {
-	throw std::runtime_error("testz");
-
 	// Retrieve the binary
 	const Binary binary = GetBinary(launchInfo);
 	if (!binary.Data || binary.Size < 0x1000)
