@@ -12,9 +12,14 @@
 #define WM_TRAY (WM_USER + 1)
 
 // Action IDs
-constexpr int IDM_LOAD = 111;
-constexpr int IDM_ABOUT = 112;
-constexpr int IDM_EXIT = 113;
+enum ACTION_ID {
+	IDM_FIRST = 110,
+
+	IDM_LOAD = IDM_FIRST,
+	IDM_LOADEXIT,
+	IDM_ABOUT,
+	IDM_EXIT
+};
 
 NOTIFYICONDATA g_NotifyData;
 WNDCLASS g_WindowClass;
@@ -50,6 +55,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			const HMENU hPopup = CreatePopupMenu();
 			AppendMenu(hPopup, MF_STRING, IDM_LOAD, TEXT("Load"));
+			AppendMenu(hPopup, MF_STRING, IDM_LOADEXIT, TEXT("Load + Exit"));
 			AppendMenu(hPopup, MF_SEPARATOR, 1, nullptr);
 			AppendMenu(hPopup, MF_STRING, IDM_ABOUT, TEXT("About"));
 			AppendMenu(hPopup, MF_STRING, IDM_EXIT, TEXT("Exit"));
@@ -146,6 +152,12 @@ void RegisterCallbacks(const LaunchInfo& launchInfo)
 	g_MenuCallbacks[IDM_LOAD] = [launchInfo]
 	{
 		LoadSafe(launchInfo);
+	};
+
+	g_MenuCallbacks[IDM_LOADEXIT] = [launchInfo]
+	{
+		LoadSafe(launchInfo);
+		PostQuitMessage(0);
 	};
 
 	g_MenuCallbacks[IDM_ABOUT] = []
