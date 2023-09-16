@@ -32,7 +32,8 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		g_NotifyData.cbSize = sizeof g_NotifyData;
 		g_NotifyData.hWnd = hWnd;
 		g_NotifyData.uID = 1;
-		g_NotifyData.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
+		g_NotifyData.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP | NIF_INFO;
+		g_NotifyData.dwInfoFlags = NIIF_INFO;
 		g_NotifyData.uCallbackMessage = WM_USER + 1;
 		g_NotifyData.hIcon = LoadIcon(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDR_ICON));
 		lstrcpy(g_NotifyData.szTip, TEXT("Fedoraloader"));
@@ -85,6 +86,14 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
+BOOL ShowNotification(LPCSTR title, LPCSTR text)
+{
+	lstrcpy(g_NotifyData.szInfoTitle, title);
+    lstrcpy(g_NotifyData.szInfo, text);
+
+    return Shell_NotifyIcon(NIM_MODIFY, &g_NotifyData);
+}
+
 void CreateTray(HINSTANCE hInstance)
 {
 	// Create the window class
@@ -110,7 +119,22 @@ void RegisterCallbacks(const LaunchInfo& launchInfo)
 {
 	g_MenuCallbacks[IDM_LOAD] = [launchInfo]
 	{
-		Loader::Load(launchInfo);
+		ShowNotification("Loading...", launchInfo.Unprotected
+			? "Please open your game now."
+			: "Please wait until the game is ready.");
+
+		try
+		{
+			Loader::Load(launchInfo);
+		}
+		catch (const std::exception& ex)
+		{
+			ShowNotification("Error", ex.what());
+		}
+		catch (...)
+		{
+			ShowNotification("Unexpected Error", "What did you do?");
+		}
 	};
 
 	g_MenuCallbacks[IDM_ABOUT] = []
