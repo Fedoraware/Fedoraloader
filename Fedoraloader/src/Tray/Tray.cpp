@@ -17,7 +17,8 @@ HWND g_WindowHandle;
 
 // Action IDsSh
 constexpr int IDM_LOAD = 111;
-constexpr int IDM_EXIT = 112;
+constexpr int IDM_ABOUT = 112;
+constexpr int IDM_EXIT = 113;
 
 std::unordered_map<int, std::function<void()>> g_MenuCallbacks;
 
@@ -48,6 +49,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			const HMENU hPopup = CreatePopupMenu();
 			AppendMenu(hPopup, MF_STRING, IDM_LOAD, TEXT("Load"));
 			AppendMenu(hPopup, MF_SEPARATOR, 1, nullptr);
+			AppendMenu(hPopup, MF_STRING, IDM_ABOUT, TEXT("About"));
 			AppendMenu(hPopup, MF_STRING, IDM_EXIT, TEXT("Exit"));
 
 			POINT pt;
@@ -69,6 +71,10 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		return false;
 
+	case WM_HELP:
+		ShellExecute(hWnd, nullptr, "https://github.com/Fedoraware/Fedoraware", nullptr, nullptr, SW_SHOW);
+		return false;
+
 	// Destroy the icon
 	case WM_DESTROY:
 		Shell_NotifyIcon(NIM_DELETE, &g_NotifyData);
@@ -86,7 +92,11 @@ void CreateTray(HINSTANCE hInstance)
 	g_WindowClass.lpfnWndProc = WindowProc;
 	g_WindowClass.hInstance = hInstance;
 	g_WindowClass.lpszClassName = TEXT("fl001");
-	RegisterClass(&g_WindowClass);
+
+	if (!RegisterClass(&g_WindowClass))
+	{
+		throw std::runtime_error("Failed to register try window class");
+	}
 
 	// Create the main window (hidden)
 	g_WindowHandle = CreateWindow(g_WindowClass.lpszClassName, TEXT("Fedoraloader"), 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, hInstance, NULL);
@@ -101,6 +111,21 @@ void RegisterCallbacks(const LaunchInfo& launchInfo)
 	g_MenuCallbacks[IDM_LOAD] = [launchInfo]
 	{
 		Loader::Load(launchInfo);
+	};
+
+	g_MenuCallbacks[IDM_ABOUT] = []
+	{
+		MessageBoxA(
+			g_WindowHandle,
+			"Fedoraloader v2 (by lnx00)\n"
+			"\n"
+			"A loader and injector for the free and open-source,\n"
+			"community-driven training software Fedoraware.\n"
+			"\n"
+			"Press 'Help' to view the official GitHub repository.",
+			"About Fedoraloader",
+			MB_HELP | MB_ICONINFORMATION | MB_SYSTEMMODAL
+		);
 	};
 
 	g_MenuCallbacks[IDM_EXIT] = []
