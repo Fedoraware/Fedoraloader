@@ -49,10 +49,10 @@ DWORD Utils::WaitForProcess(const char* procName, DWORD sTimeout)
 
 		// Check timeout
 		const auto currentTime = GetTickCount64();
-        const auto elapsedTime = currentTime - startTime;
+		const auto elapsedTime = currentTime - startTime;
 		if (elapsedTime >= static_cast<ULONGLONG>(sTimeout) * 1000) { break; }
 
-		Sleep (100);
+		Sleep(100);
 	}
 
 	return 0;
@@ -71,10 +71,10 @@ HANDLE Utils::WaitForProcessHandle(const char* procName, DWORD sTimeout)
 
 		// Check timeout
 		const auto currentTime = GetTickCount64();
-        const auto elapsedTime = currentTime - startTime;
+		const auto elapsedTime = currentTime - startTime;
 		if (elapsedTime >= static_cast<ULONGLONG>(sTimeout) * 1000) { break; }
 
-		Sleep (100);
+		Sleep(100);
 	}
 
 	return nullptr;
@@ -137,7 +137,7 @@ Binary Utils::GetBinaryResource(WORD id)
 		throw std::runtime_error("Failed to load resource data");
 	}
 
-	BYTE* binData = static_cast<BYTE*>(LockResource(resData));
+	auto binData = static_cast<BYTE*>(LockResource(resData));
 	return {
 		.Data = binData,
 		.Size = resSize

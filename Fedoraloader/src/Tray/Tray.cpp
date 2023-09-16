@@ -11,14 +11,14 @@
 
 #define WM_TRAY (WM_USER + 1)
 
-NOTIFYICONDATA g_NotifyData;
-WNDCLASS g_WindowClass;
-HWND g_WindowHandle;
-
-// Action IDsSh
+// Action IDs
 constexpr int IDM_LOAD = 111;
 constexpr int IDM_ABOUT = 112;
 constexpr int IDM_EXIT = 113;
+
+NOTIFYICONDATA g_NotifyData;
+WNDCLASS g_WindowClass;
+HWND g_WindowHandle;
 
 std::unordered_map<int, std::function<void()>> g_MenuCallbacks;
 
@@ -28,16 +28,18 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 	// Initialize icon
 	case WM_CREATE:
-		g_NotifyData = {};
-		g_NotifyData.cbSize = sizeof g_NotifyData;
-		g_NotifyData.hWnd = hWnd;
-		g_NotifyData.uID = 1;
-		g_NotifyData.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP | NIF_INFO;
-		g_NotifyData.uCallbackMessage = WM_USER + 1;
-		g_NotifyData.hIcon = LoadIcon(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDR_ICON));
-		lstrcpy(g_NotifyData.szTip, TEXT("Fedoraloader"));
+		{
+			g_NotifyData = {};
+			g_NotifyData.cbSize = sizeof g_NotifyData;
+			g_NotifyData.hWnd = hWnd;
+			g_NotifyData.uID = 1;
+			g_NotifyData.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP | NIF_INFO;
+			g_NotifyData.uCallbackMessage = WM_USER + 1;
+			g_NotifyData.hIcon = LoadIcon(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDR_ICON));
+			lstrcpy(g_NotifyData.szTip, TEXT("Fedoraloader"));
 
-		Shell_NotifyIcon(NIM_ADD, &g_NotifyData);
+			Shell_NotifyIcon(NIM_ADD, &g_NotifyData);
+		}
 		return false;
 
 	// Create the menu
@@ -52,9 +54,9 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			AppendMenu(hPopup, MF_STRING, IDM_ABOUT, TEXT("About"));
 			AppendMenu(hPopup, MF_STRING, IDM_EXIT, TEXT("Exit"));
 
-			POINT pt;
-			GetCursorPos(&pt);
-			TrackPopupMenu(hPopup, TPM_RIGHTBUTTON, pt.x, pt.y, 0, g_WindowHandle, nullptr);
+			POINT cursorPos;
+			GetCursorPos(&cursorPos);
+			TrackPopupMenu(hPopup, TPM_RIGHTBUTTON, cursorPos.x, cursorPos.y, 0, g_WindowHandle, nullptr);
 			DestroyMenu(hPopup);
 		}
 		return false;
@@ -72,13 +74,17 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		return false;
 
 	case WM_HELP:
-		ShellExecute(hWnd, nullptr, "https://github.com/Fedoraware/Fedoraware", nullptr, nullptr, SW_SHOW);
+		{
+			ShellExecute(hWnd, nullptr, "https://github.com/Fedoraware/Fedoraware", nullptr, nullptr, SW_SHOW);
+		}
 		return false;
 
 	// Destroy the icon
 	case WM_DESTROY:
-		Shell_NotifyIcon(NIM_DELETE, &g_NotifyData);
-		PostQuitMessage(0);
+		{
+			Shell_NotifyIcon(NIM_DELETE, &g_NotifyData);
+			PostQuitMessage(0);
+		}
 		return false;
 	}
 
@@ -88,10 +94,10 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 BOOL ShowNotification(LPCSTR title, LPCSTR text, DWORD flags = NIIF_INFO)
 {
 	lstrcpy(g_NotifyData.szInfoTitle, title);
-    lstrcpy(g_NotifyData.szInfo, text);
+	lstrcpy(g_NotifyData.szInfo, text);
 	g_NotifyData.dwInfoFlags = flags;
 
-    return Shell_NotifyIcon(NIM_MODIFY, &g_NotifyData);
+	return Shell_NotifyIcon(NIM_MODIFY, &g_NotifyData);
 }
 
 void CreateTray(HINSTANCE hInstance)
@@ -115,26 +121,31 @@ void CreateTray(HINSTANCE hInstance)
 	}
 }
 
+void LoadSafe(const LaunchInfo& launchInfo)
+{
+	ShowNotification("Loading...", launchInfo.Unprotected
+		                               ? "Please open your game now."
+		                               : "Please wait until the game is ready.");
+
+	try
+	{
+		Loader::Load(launchInfo);
+	}
+	catch (const std::exception& ex)
+	{
+		ShowNotification("Error", ex.what(), NIIF_ERROR);
+	}
+	catch (...)
+	{
+		ShowNotification("Unexpected Error", "What did you do?", NIIF_ERROR);
+	}
+}
+
 void RegisterCallbacks(const LaunchInfo& launchInfo)
 {
 	g_MenuCallbacks[IDM_LOAD] = [launchInfo]
 	{
-		ShowNotification("Loading...", launchInfo.Unprotected
-			? "Please open your game now."
-			: "Please wait until the game is ready.");
-
-		try
-		{
-			Loader::Load(launchInfo);
-		}
-		catch (const std::exception& ex)
-		{
-			ShowNotification("Error", ex.what(), NIIF_ERROR);
-		}
-		catch (...)
-		{
-			ShowNotification("Unexpected Error", "What did you do?", NIIF_ERROR);
-		}
+		LoadSafe(launchInfo);
 	};
 
 	g_MenuCallbacks[IDM_ABOUT] = []
@@ -147,7 +158,7 @@ void RegisterCallbacks(const LaunchInfo& launchInfo)
 			"community-driven training software Fedoraware.\n"
 			"\n"
 			"Press 'Help' to view the official GitHub repository.",
-			"About Fedoraloader",
+			"About",
 			MB_HELP | MB_ICONINFORMATION | MB_SYSTEMMODAL
 		);
 	};

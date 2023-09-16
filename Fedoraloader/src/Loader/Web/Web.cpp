@@ -5,17 +5,19 @@
 
 Binary Web::DownloadFile(LPCWSTR url)
 {
+	// Init WinINet
 	const HINTERNET hInternet = InternetOpenA("HTTP Request", INTERNET_OPEN_TYPE_DIRECT, nullptr, nullptr, 0);
 	if (!hInternet)
 	{
-		throw std::runtime_error("Failed to initialize WinINet");
+		throw std::runtime_error("Failed to initialize connection");
 	}
 
+	// Open the connection
 	const HINTERNET hConnect = InternetOpenUrlW(hInternet, url, nullptr, 0, INTERNET_FLAG_RELOAD, 0);
 	if (!hConnect)
 	{
 		InternetCloseHandle(hInternet);
-		throw std::runtime_error("Failed to open download URL");
+		throw std::runtime_error("Failed to open connection");
 	}
 
 	BYTE* fileData = nullptr;

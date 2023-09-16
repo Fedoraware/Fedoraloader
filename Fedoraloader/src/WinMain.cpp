@@ -53,12 +53,12 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 	catch (const std::exception& ex)
     {
         // Runtime exceptions
-    	MessageBox(nullptr, ex.what(), "Exception", MB_OK | MB_ICONERROR);
+    	MessageBox(nullptr, ex.what(), "Exception", MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
     }
 	catch (...)
     {
         // Unexpected errors
-	    MessageBox(nullptr, "An unexpected error occured!", "Error", MB_OK | MB_ICONERROR);
+	    MessageBox(nullptr, "An unexpected error occured!", "Error", MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
     }
 
     return 0;
