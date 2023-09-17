@@ -152,7 +152,7 @@ void CreateTray(HINSTANCE hInstance)
 
 	if (!RegisterClass(&g_WindowClass))
 	{
-		throw std::runtime_error("Failed to register try window class");
+		throw std::runtime_error("Failed to register tray window class");
 	}
 
 	// Create the main window (hidden)
@@ -163,7 +163,6 @@ void CreateTray(HINSTANCE hInstance)
 	}
 
 	// Allow dark mode
-	SetPreferredAppMode(PreferredAppMode::AllowDark);
 	SetPreferredAppMode(PreferredAppMode::AllowDark);
 }
 
@@ -189,17 +188,20 @@ void LoadSafe(const LaunchInfo& launchInfo)
 
 void RegisterCallbacks(const LaunchInfo& launchInfo)
 {
+	// "Load" button
 	g_MenuCallbacks[IDM_LOAD] = [launchInfo]
 	{
 		LoadSafe(launchInfo);
 	};
 
+	// "Load + Exit" button
 	g_MenuCallbacks[IDM_LOADEXIT] = [launchInfo]
 	{
 		LoadSafe(launchInfo);
 		PostQuitMessage(0);
 	};
 
+	// "About" button
 	g_MenuCallbacks[IDM_ABOUT] = []
 	{
 		MessageBoxA(
@@ -215,6 +217,7 @@ void RegisterCallbacks(const LaunchInfo& launchInfo)
 		);
 	};
 
+	// "Exit" button
 	g_MenuCallbacks[IDM_EXIT] = []
 	{
 		PostQuitMessage(0);
