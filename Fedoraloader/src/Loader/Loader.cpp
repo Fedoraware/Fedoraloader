@@ -64,10 +64,10 @@ bool Loader::Load(const LaunchInfo& launchInfo)
 		ShellExecuteA(nullptr, nullptr, "steam://run/440", nullptr, nullptr, SW_SHOWNORMAL);
 
 		// Inject VAC Bypass
-		const HANDLE hSteam = Utils::WaitForProcessHandle("steam.exe", 60);
+		const HANDLE hSteam = Utils::WaitForProcessHandle("steam.exe", 90);
 		if (hSteam == INVALID_HANDLE_VALUE || hSteam == nullptr)
 		{
-			throw std::runtime_error("Timeout while waiting for steam handle");
+			throw std::runtime_error("Timeout while waiting for steam");
 		}
 
 		const Binary vacBypass = Utils::GetBinaryResource(IDR_VACBYPASS);
@@ -75,10 +75,10 @@ bool Loader::Load(const LaunchInfo& launchInfo)
 	}
 
 	// Find the game
-	const HANDLE hGame = Utils::WaitForProcessHandle("hl2.exe", 60);
+	const HANDLE hGame = Utils::WaitForProcessHandle("hl2.exe", 90);
 	if (hGame == INVALID_HANDLE_VALUE || hGame == nullptr)
 	{
-		throw std::runtime_error("Timeout while waiting for game handle");
+		throw std::runtime_error("Timeout while waiting for game");
 	}
 
 	// Inject the binary

@@ -1,23 +1,44 @@
 #include "LoadLibrary.h"
 
+#include <filesystem>
+#include <stdexcept>
+
 bool LL::Inject(HANDLE hTarget, LPCWSTR fileName)
 {
+	// Get the full file path
 	WCHAR fullPath[MAX_PATH];
 	if (GetFullPathNameW(fileName, MAX_PATH, fullPath, nullptr) == 0)
 	{
-		return false;
+		throw std::runtime_error("Failed to retrieve full file path");
+	}
+
+	// Check if the file exists
+	if (!std::filesystem::exists(fullPath))
+	{
+		throw std::invalid_argument("The given file does not exist");
 	}
 
 	// Allocate and write the dll path
 	const LPVOID lpPathAddress = VirtualAllocEx(hTarget, nullptr, MAX_PATH, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-    if (lpPathAddress == nullptr) { return false; }
+    if (lpPathAddress == nullptr)
+    {
+	    throw std::runtime_error("Failed to allocate library path memory");
+    }
 
 	const DWORD dwWriteResult = WriteProcessMemory(hTarget, lpPathAddress, fullPath, MAX_PATH, nullptr);
-    if (dwWriteResult == 0) { return false; }
+    if (dwWriteResult == 0)
+    {
+		VirtualFreeEx(hTarget, lpPathAddress, 0, MEM_RELEASE);
+	    throw std::runtime_error("Failed to write library path");
+    }
 
 	// Load the dll
 	const HANDLE hThread = CreateRemoteThread(hTarget, nullptr, NULL, reinterpret_cast<LPTHREAD_START_ROUTINE>(LoadLibraryW), lpPathAddress, NULL, nullptr);
-	if (!hThread) { return false; }
+	if (!hThread)
+	{
+		VirtualFreeEx(hTarget, lpPathAddress, 0, MEM_RELEASE);
+		throw std::runtime_error("Failed to create remote LoadLibrary thread");
+	}
 
 	// Wait for thread
 	WaitForSingleObject(hThread, 15 * 1000);

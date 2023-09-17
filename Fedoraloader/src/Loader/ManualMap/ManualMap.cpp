@@ -162,19 +162,19 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary)
 	if (!WriteProcessMemory(hTarget, pTargetBase, pSrcData, 0x1000, nullptr))
 	{
 		VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
-		throw std::runtime_error("Failed to write PE header");
+		throw std::runtime_error("Failed to write PE header to target");
 	}
 
 	// Write sections
 	auto pSectionHeader = IMAGE_FIRST_SECTION(ntHeaders);
-	for (UINT i = 0; i != fileHeader->NumberOfSections; ++i, ++pSectionHeader)
+	for (UINT i = 0; i < fileHeader->NumberOfSections; ++i, ++pSectionHeader)
 	{
 		if (pSectionHeader->SizeOfRawData)
 		{
 			if (!WriteProcessMemory(hTarget, pTargetBase + pSectionHeader->VirtualAddress, pSrcData + pSectionHeader->PointerToRawData, pSectionHeader->SizeOfRawData, nullptr))
 			{
 				VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
-				throw std::runtime_error("Failed to map sections");
+				throw std::runtime_error(std::format("Failed to map section: {}", reinterpret_cast<const char*>(pSectionHeader->Name)));
 			}
 		}
 	}
@@ -184,14 +184,14 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary)
 	if (!pMapData)
 	{
 		VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
-		throw std::runtime_error("Failed to allocate manual map data memory");
+		throw std::runtime_error("Failed to allocate mapping data memory");
 	}
 
 	if (!WriteProcessMemory(hTarget, pMapData, &mapData, sizeof(ManualMapData), nullptr))
 	{
 		VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
 		VirtualFreeEx(hTarget, pMapData, 0, MEM_RELEASE);
-		throw std::runtime_error("Failed to write manual map data");
+		throw std::runtime_error("Failed to write mapping data to target");
 	}
 
 	// Write library loader
@@ -209,7 +209,7 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary)
 		VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
 		VirtualFreeEx(hTarget, pMapData, 0, MEM_RELEASE);
 		VirtualFreeEx(hTarget, pLoader, 0, MEM_RELEASE);
-		throw std::runtime_error("Failed to write library loader");
+		throw std::runtime_error("Failed to write library loader to target");
 	}
 
 	// Run the library loader
@@ -235,7 +235,7 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary)
 		GetExitCodeProcess(hTarget, &exitCode);
 		if (exitCode != STILL_ACTIVE)
 		{
-			throw std::runtime_error(std::format("Process crashed with exit code: %d", exitCode));
+			throw std::runtime_error(std::format("Process crashed with exit code: {:d}", exitCode));
 		}
 
 		// Read the manual map data
@@ -278,7 +278,7 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary)
 			if (pSectionHeader->Misc.VirtualSize)
 			{
 				const auto sectionName = reinterpret_cast<const char*>(pSectionHeader->Name);
-				if ((strcmp(sectionName, ".pdata") == 0) ||
+				if (strcmp(sectionName, ".pdata") == 0 ||
 					strcmp(sectionName, ".rsrc") == 0 ||
 					strcmp(sectionName, ".reloc") == 0)
 				{
@@ -309,6 +309,8 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary)
 				{
 					flNewProtect = PAGE_EXECUTE_READ;
 				}
+
+				// Change protection
 				if (!VirtualProtectEx(hTarget, pTargetBase + pSectionHeader->VirtualAddress, pSectionHeader->Misc.VirtualSize, flNewProtect, &flOldProtect))
 				{
 					std::printf("Failed to set %s to %lX\n", reinterpret_cast<char*>(pSectionHeader->Name), flNewProtect);
