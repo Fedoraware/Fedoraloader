@@ -20,7 +20,7 @@ LaunchInfo GetLaunchInfo()
         const auto arg = szArglist[i];
 
         CHECK_ARG("-silent", info.Silent)
-        CHECK_ARG("-unprotected", info.Unprotected)
+        CHECK_ARG("-usebypass", info.UseBypass)
         CHECK_ARG("-debug", info.Debug)
 
         CHECK_ARG_STR("-file", info.File)

@@ -50,7 +50,7 @@ bool Loader::Load(const LaunchInfo& launchInfo)
 	}
 
 	// (Optional) Restart Steam/TF2 and inject VAC Bypass
-	if (!launchInfo.Unprotected)
+	if (launchInfo.UseBypass)
 	{
 		// Close Steam and TF2
 		Utils::WaitCloseProcess("hl2.exe");
@@ -65,6 +65,11 @@ bool Loader::Load(const LaunchInfo& launchInfo)
 
 		// Inject VAC Bypass
 		const HANDLE hSteam = Utils::WaitForProcessHandle("steam.exe", 60);
+		if (hSteam == INVALID_HANDLE_VALUE || hSteam == nullptr)
+		{
+			throw std::runtime_error("Timeout while waiting for steam handle");
+		}
+
 		const Binary vacBypass = Utils::GetBinaryResource(IDR_VACBYPASS);
 		MM::Inject(hSteam, vacBypass);
 	}

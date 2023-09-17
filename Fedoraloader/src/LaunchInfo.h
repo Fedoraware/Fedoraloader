@@ -4,7 +4,7 @@
 struct LaunchInfo
 {
 	bool Silent = false;
-    bool Unprotected = false;
+    bool UseBypass = false;
     bool Debug = false;
 
     LPCWSTR File = nullptr;

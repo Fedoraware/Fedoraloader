@@ -2,7 +2,7 @@
 
 Fedoraloader is an easy-to-use loader for the free and open-source cheat [Fedoraware](https://github.com/Fedoraware/Fedoraware).
 It automatically downloads and injects the latest Fedoraware build into your game.
-By default, Fedoraloader will also restart Steam and inject the VAC-Bypass to prevent bans.
+Optionally, Fedoraloader can also restart Steam and inject a VAC-Bypass to prevent bans.
 
 This is a complete C++ rewrite of the old Fedoraloader, which was written in C#.
 
@@ -43,7 +43,7 @@ To use them, create a shortcut to the loader and add the arguments to the target
 | Argument | Description |
 | --- | --- |
 | `-silent` | Run the loader without GUI |
-| `-unprotected` | Skip VAC-Bypass and don't restart Steam |
+| `-usebypass` | Restart Steam with VAC bypass |
 | `-debug` | Use LoadLibrary-Injection (only works with local files) |
 | `-file "..."` | Custom local file (.zip or .dll) |
 | `-url "..."` | Custom download URL (.zip or .dll) |
