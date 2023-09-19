@@ -1,12 +1,12 @@
 #include <Windows.h>
 #include "Utils/Utils.h"
+#include "Hooks/Hooks.h"
 
 void Init()
 {
-	const auto hMod = GetModuleHandle(TEXT("steamservice"));
-	if (hMod)
+	if (const auto hMod = GetModuleHandle(TEXT("steamservice")))
 	{
-		auto toPatch = reinterpret_cast<PBYTE>(Pattern::Find("steamservice", "74 47 6A 01 6A"));
+		const auto toPatch = reinterpret_cast<PBYTE>(Pattern::Find("steamservice", "74 47 6A 01 6A"));
 		if (toPatch)
 		{
 			DWORD flOldProtect;
@@ -14,17 +14,13 @@ void Init()
 			*toPatch = 0xEB;
 			VirtualProtect(toPatch, 1, flOldProtect, &flOldProtect);
 
-			Utils::HookImport("steamservice", "kernel32.dll", "LoadLibraryExW", nullptr); // TODO: This
+			Utils::HookImport(L"steamservice", "kernel32.dll", "LoadLibraryExW", Hooks::Hk_LoadLibraryExW);
 			MessageBoxW(nullptr, L"Initialization was successful!", L"VAC bypass", MB_OK | MB_ICONINFORMATION);
-		}
-		else
-		{
-			Utils::HookImport(nullptr, "kernel32.dll", "LoadLibraryExW", nullptr); // TODO: This
 		}
 	}
 	else
 	{
-		MessageBoxA(nullptr, "Module not found", "Fedoraloader", MB_OK);
+		Utils::HookImport(nullptr, "kernel32.dll", "LoadLibraryExW", Hooks::Hk_LoadLibraryExW_SteamClient);
 	}
 }
 
