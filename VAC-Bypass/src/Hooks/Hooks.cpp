@@ -28,8 +28,10 @@ HMODULE WINAPI Hooks::Hk_LoadLibraryExW_SteamClient(LPCWSTR lpLibFileName, HANDL
 			VirtualProtect(toPatch, 1, PAGE_EXECUTE_READWRITE, &old);
 			*toPatch = 0xEB;
 			VirtualProtect(toPatch, 1, old, &old);
-			Utils::HookImport(L"steamservice", "kernel32.dll", "LoadLibraryExW", Hk_LoadLibraryExW);
-			MessageBox(nullptr, L"VAC-Bypass successfully initialized", L"Fedoraloader", MB_OK | MB_ICONINFORMATION);
+			if (!Utils::HookImport(L"steamservice", "kernel32.dll", "LoadLibraryExW", Hk_LoadLibraryExW))
+			{
+				MessageBoxA(nullptr, "Failed to hook LoadLibraryExW", "Fedoraloader", MB_OK | MB_ICONERROR);
+			}
 		}
 	}
 	return result;
@@ -76,7 +78,7 @@ FARPROC WINAPI Hooks::Hk_GetProcAddress(HMODULE hModule, LPCSTR lpProcName)
 VOID WINAPI Hooks::Hk_GetSystemInfo(LPSYSTEM_INFO lpSystemInfo)
 {
 	GetSystemInfo(lpSystemInfo);
-	lpSystemInfo->dwPageSize = 1337;
+	lpSystemInfo->dwPageSize = 1270;
 }
 
 BOOL WINAPI Hooks::Hk_GetVersionExA(LPOSVERSIONINFOEXA lpVersionInformation)

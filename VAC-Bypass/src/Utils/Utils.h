@@ -4,5 +4,5 @@
 
 namespace Utils
 {
-	void HookImport(LPCWSTR moduleName, LPCSTR importModuleName, LPCSTR functionName, PVOID fun);
+	bool HookImport(LPCWSTR moduleName, LPCSTR importModuleName, LPCSTR functionName, PVOID fun);
 }

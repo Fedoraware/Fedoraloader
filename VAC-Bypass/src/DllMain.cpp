@@ -4,18 +4,23 @@
 
 void Init()
 {
-	if (const auto hMod = GetModuleHandle(TEXT("steamservice")))
+	if (GetModuleHandle(TEXT("steamservice")))
 	{
 		const auto toPatch = reinterpret_cast<PBYTE>(Pattern::Find("steamservice", "74 47 6A 01 6A"));
-		if (toPatch)
+		if (!toPatch)
 		{
-			DWORD flOldProtect;
-			VirtualProtect(toPatch, 1, PAGE_EXECUTE_READWRITE, &flOldProtect);
-			*toPatch = 0xEB;
-			VirtualProtect(toPatch, 1, flOldProtect, &flOldProtect);
+			MessageBoxA(nullptr, "Failed to find signature", "Fedoraloader", MB_OK | MB_ICONERROR);
+			return;
+		}
 
-			Utils::HookImport(L"steamservice", "kernel32.dll", "LoadLibraryExW", Hooks::Hk_LoadLibraryExW);
-			MessageBoxW(nullptr, L"Initialization was successful!", L"VAC bypass", MB_OK | MB_ICONINFORMATION);
+		DWORD flOldProtect;
+		VirtualProtect(toPatch, 1, PAGE_EXECUTE_READWRITE, &flOldProtect);
+		*toPatch = 0xEB;
+		VirtualProtect(toPatch, 1, flOldProtect, &flOldProtect);
+
+		if (!Utils::HookImport(L"steamservice", "kernel32.dll", "LoadLibraryExW", Hooks::Hk_LoadLibraryExW))
+		{
+			MessageBoxA(nullptr, "Failed to hook LoadLibraryExW", "Fedoraloader", MB_OK | MB_ICONERROR);
 		}
 	}
 	else
