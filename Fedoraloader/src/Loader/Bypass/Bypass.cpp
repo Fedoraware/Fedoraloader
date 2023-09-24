@@ -1,9 +1,11 @@
 #include "Bypass.h"
+
 #include "../ManualMap/ManualMap.h"
 #include "../../Utils/Utils.h"
 #include "../../../resource.h"
 
 #include <stdexcept>
+#include <format>
 
 void ExitSteam()
 {
@@ -39,13 +41,13 @@ void Bypass::Run()
 
 	// Start steam
 	const LPCWSTR steamPath = GetSteamPath();
-	const LPCWSTR launchArgs = L" -applaunch 440";
+	const auto cmdLine = std::format(L"\"{}\" -applaunch 440", steamPath);
+	delete[] steamPath;
 
 	STARTUPINFOW startupInfo = {};
     PROCESS_INFORMATION processInfo = {};
-	if (!CreateProcessW(steamPath, const_cast<LPWSTR>(launchArgs), nullptr, nullptr, FALSE, 0, nullptr, nullptr, &startupInfo, &processInfo))
+	if (!CreateProcessW(nullptr, const_cast<LPWSTR>(cmdLine.c_str()), nullptr, nullptr, FALSE, 0, nullptr, nullptr, &startupInfo, &processInfo))
 	{
-		delete[] steamPath;
 		throw std::runtime_error("Failed to run Steam");
 	}
 
@@ -54,7 +56,6 @@ void Bypass::Run()
 	{
 		CloseHandle(processInfo.hProcess);
 		CloseHandle(processInfo.hThread);
-		delete[] steamPath;
 		throw std::runtime_error("Timeout while waiting for Steam");
 	}
 	SuspendThread(processInfo.hThread);
@@ -67,5 +68,4 @@ void Bypass::Run()
 	ResumeThread(processInfo.hThread);
 	CloseHandle(processInfo.hProcess);
 	CloseHandle(processInfo.hThread);
-	delete[] steamPath;
 }
