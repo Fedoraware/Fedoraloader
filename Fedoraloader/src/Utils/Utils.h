@@ -14,6 +14,7 @@ namespace Utils
 	DWORD WaitForProcess(const char* procName, DWORD sTimeout = 10);
 	HANDLE WaitForProcessHandle(const char* procName, DWORD sTimeout = 10);
 	bool WaitCloseProcess(const char* procName, DWORD sTimeout = 10);
+	void WaitForModule(DWORD processId, LPCSTR moduleName);
 
 	Binary ReadBinaryFile(LPCWSTR fileName);
 	Binary GetBinaryResource(WORD id);

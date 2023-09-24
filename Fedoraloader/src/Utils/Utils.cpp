@@ -93,6 +93,34 @@ bool Utils::WaitCloseProcess(const char* procName, DWORD sTimeout)
 	return result == WAIT_OBJECT_0;
 }
 
+void Utils::WaitForModule(DWORD processId, LPCSTR moduleName)
+{
+	bool moduleFound = false;
+	while (!moduleFound)
+	{
+		const HANDLE moduleSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, processId);
+		if (moduleSnapshot == INVALID_HANDLE_VALUE) { continue; }
+
+		MODULEENTRY32 moduleEntry;
+        moduleEntry.dwSize = sizeof(moduleEntry);
+
+		// Find the target module
+		if (Module32First(moduleSnapshot, &moduleEntry))
+		{
+            do
+			{
+                if (!strcmp(moduleEntry.szModule, moduleName))
+				{
+                    moduleFound = true;
+                    break;
+                }
+            } while (Module32Next(moduleSnapshot, &moduleEntry));
+        }
+
+        CloseHandle(moduleSnapshot);
+	}
+}
+
 Binary Utils::ReadBinaryFile(LPCWSTR fileName)
 {
 	std::ifstream inFile(fileName, std::ios::binary | std::ios::ate);
