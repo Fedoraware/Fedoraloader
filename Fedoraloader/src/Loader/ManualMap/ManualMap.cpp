@@ -222,11 +222,15 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, bool waitForThread)
 		throw std::runtime_error("Failed to create the remote thread");
 	}
 
+	if (!waitForThread)
+	{
+		CloseHandle(hThread);
+		return true;
+	}
+
 	// Wait for the library loader
 	WaitForSingleObject(hThread, 15 * 1000);
 	CloseHandle(hThread);
-
-	if (!waitForThread) { return true; }
 
 	// Wait for the target thread
 	HINSTANCE hCheck = nullptr;

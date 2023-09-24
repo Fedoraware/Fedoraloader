@@ -45,11 +45,18 @@ void Bypass::Run()
     PROCESS_INFORMATION processInfo = {};
 	if (!CreateProcessW(steamPath, const_cast<LPWSTR>(launchArgs), nullptr, nullptr, FALSE, 0, nullptr, nullptr, &startupInfo, &processInfo))
 	{
-		throw std::runtime_error("Failed to run steam");
+		delete[] steamPath;
+		throw std::runtime_error("Failed to run Steam");
 	}
 
 	// Wait for Steam
-	Utils::WaitForModule(processInfo.dwProcessId, "steam.exe");
+	if (!Utils::WaitForModule(processInfo.dwProcessId, "steam.exe", 30))
+	{
+		CloseHandle(processInfo.hProcess);
+		CloseHandle(processInfo.hThread);
+		delete[] steamPath;
+		throw std::runtime_error("Timeout while waiting for Steam");
+	}
 	SuspendThread(processInfo.hThread);
 
 	// Inject VAC Bypass

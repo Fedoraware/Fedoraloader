@@ -6,6 +6,8 @@
 
 DWORD Utils::FindProcess(const char* procName)
 {
+	DWORD processId = 0;
+
 	PROCESSENTRY32 procEntry{};
 	procEntry.dwSize = sizeof(procEntry);
 
@@ -17,14 +19,14 @@ DWORD Utils::FindProcess(const char* procName)
 	{
 		if (strcmp(procEntry.szExeFile, procName) == 0)
 		{
-			CloseHandle(hSnapshot);
-			return procEntry.th32ProcessID;
+			processId = procEntry.th32ProcessID;
+			break;
 		}
 	}
 	while (Process32Next(hSnapshot, &procEntry));
 
 	CloseHandle(hSnapshot);
-	return 0;
+	return processId;
 }
 
 HANDLE Utils::GetProcessHandle(const char* procName)
@@ -93,9 +95,11 @@ bool Utils::WaitCloseProcess(const char* procName, DWORD sTimeout)
 	return result == WAIT_OBJECT_0;
 }
 
-void Utils::WaitForModule(DWORD processId, LPCSTR moduleName)
+bool Utils::WaitForModule(DWORD processId, LPCSTR moduleName, DWORD sTimeout)
 {
+	const auto startTime = GetTickCount64();
 	bool moduleFound = false;
+
 	while (!moduleFound)
 	{
 		const HANDLE moduleSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, processId);
@@ -118,7 +122,14 @@ void Utils::WaitForModule(DWORD processId, LPCSTR moduleName)
         }
 
         CloseHandle(moduleSnapshot);
+
+		// Check timeout
+		const auto currentTime = GetTickCount64();
+		const auto elapsedTime = currentTime - startTime;
+		if (elapsedTime >= static_cast<ULONGLONG>(sTimeout) * 1000) { break; }
 	}
+
+	return moduleFound;
 }
 
 Binary Utils::ReadBinaryFile(LPCWSTR fileName)
