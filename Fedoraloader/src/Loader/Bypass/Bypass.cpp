@@ -5,26 +5,60 @@
 
 #include <stdexcept>
 
-void Bypass::Run()
+void ExitSteam()
 {
-	// Close Steam and TF2
 	Utils::WaitCloseProcess("hl2.exe");
 	Utils::WaitCloseProcess("steam.exe");
 	Utils::WaitCloseProcess("SteamService.exe");
 	Utils::WaitCloseProcess("steamwebhelper.exe");
+}
 
-	Sleep(1000);
-
-	// Run TF2 (and Steam)
-	ShellExecuteA(nullptr, nullptr, "steam://run/440", nullptr, nullptr, SW_SHOWNORMAL);
-
-	// Inject VAC Bypass
-	const HANDLE hSteam = Utils::WaitForProcessHandle("steam.exe", 90);
-	if (hSteam == INVALID_HANDLE_VALUE || hSteam == nullptr)
+LPCWSTR GetSteamPath()
+{
+	HKEY hKey = nullptr;
+	if (RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\Valve\\Steam", 0, KEY_QUERY_VALUE, &hKey) != ERROR_SUCCESS)
 	{
-		throw std::runtime_error("Timeout while waiting for steam");
+		throw std::runtime_error("Failed to open registry key");
 	}
 
+	WCHAR steamPath[MAX_PATH];
+	DWORD bufferSize = sizeof(steamPath);
+	if (RegQueryValueExW(hKey, L"SteamExe", nullptr, nullptr, reinterpret_cast<LPBYTE>(steamPath), &bufferSize) != ERROR_SUCCESS)
+	{
+		throw std::runtime_error("Failed to query registry key value");
+	}
+
+	return Utils::CopyString(steamPath);
+}
+
+void Bypass::Run()
+{
+	// Close Steam and TF2
+	ExitSteam();
+	Sleep(1000);
+
+	// Start steam
+	const LPCWSTR steamPath = GetSteamPath();
+	const LPCWSTR launchArgs = L" -applaunch 440";
+
+	STARTUPINFOW startupInfo = {};
+    PROCESS_INFORMATION processInfo = {};
+	if (!CreateProcessW(steamPath, const_cast<LPWSTR>(launchArgs), nullptr, nullptr, FALSE, 0, nullptr, nullptr, &startupInfo, &processInfo))
+	{
+		throw std::runtime_error("Failed to run steam");
+	}
+
+	// Wait for Steam
+	Utils::WaitForModule(processInfo.dwProcessId, "steam.exe");
+	SuspendThread(processInfo.hThread);
+
+	// Inject VAC Bypass
 	const Binary vacBypass = Utils::GetBinaryResource(IDR_VACBYPASS);
-	MM::Inject(hSteam, vacBypass);
+	MM::Inject(processInfo.hProcess, vacBypass, false);
+
+	// Cleanup
+	ResumeThread(processInfo.hThread);
+	CloseHandle(processInfo.hProcess);
+	CloseHandle(processInfo.hThread);
+	delete[] steamPath;
 }

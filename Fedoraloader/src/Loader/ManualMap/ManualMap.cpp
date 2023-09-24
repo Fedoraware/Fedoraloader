@@ -21,7 +21,7 @@ struct ManualMapData
 // Options
 constexpr bool ERASE_PEH = true;
 constexpr bool CLEAR_SECTIONS = true;
-constexpr bool ADJUST_PROTECTION = true;
+constexpr bool ADJUST_PROTECTION = false;
 
 #pragma runtime_checks( "", off )
 void __stdcall LibraryLoader(ManualMapData* pData)
@@ -127,7 +127,7 @@ void __stdcall LibraryLoader(ManualMapData* pData)
 DWORD __stdcall Stub() { return 0; }
 #pragma runtime_checks( "", restore )
 
-bool MM::Inject(HANDLE hTarget, const Binary& binary)
+bool MM::Inject(HANDLE hTarget, const Binary& binary, bool waitForThread)
 {
 	DWORD flOldProtect = 0;
 	BYTE* pSrcData = binary.Data;
@@ -225,6 +225,8 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary)
 	// Wait for the library loader
 	WaitForSingleObject(hThread, 15 * 1000);
 	CloseHandle(hThread);
+
+	if (!waitForThread) { return true; }
 
 	// Wait for the target thread
 	HINSTANCE hCheck = nullptr;
