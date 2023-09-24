@@ -11,6 +11,7 @@ namespace Utils
 {
 	DWORD FindProcess(const char* procName);
 	HANDLE GetProcessHandle(const char* procName);
+
 	DWORD WaitForProcess(const char* procName, DWORD sTimeout = 10);
 	HANDLE WaitForProcessHandle(const char* procName, DWORD sTimeout = 10);
 	bool WaitCloseProcess(const char* procName, DWORD sTimeout = 10);

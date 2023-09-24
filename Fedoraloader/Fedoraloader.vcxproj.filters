@@ -42,6 +42,9 @@
     <ClCompile Include="src\Tray\Tray.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Loader\Bypass\Bypass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Loader\Loader.h">
@@ -72,6 +75,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Tray\Tray.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Loader\Bypass\Bypass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
