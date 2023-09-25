@@ -7,7 +7,8 @@ Optionally, Fedoraloader can also restart Steam and inject a VAC-Bypass to preve
 This is a complete rewrite in C++ 20 of Fedoraloader. The previous version was written in C# and can be found [here](...).
 
 > [!NOTE]  
-> VAC-Bypass is disabled by default to prevent issues with other game. Check the options section below to enable it.
+> VAC-Bypass is disabled by default to prevent issues with other game.
+> Check the options section below to enable it.
 
 ## Usage
 
