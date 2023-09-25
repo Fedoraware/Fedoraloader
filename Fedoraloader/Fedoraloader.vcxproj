@@ -93,8 +93,8 @@
   <ItemGroup>
     <ClCompile Include="include\miniz\miniz.c" />
     <ClCompile Include="src\Loader\Bypass\Bypass.cpp" />
-    <ClCompile Include="src\Loader\LoadLibrary\LoadLibrary.cpp" />
-    <ClCompile Include="src\Loader\ManualMap\ManualMap.cpp" />
+    <ClCompile Include="src\Loader\Injector\LoadLibrary\LoadLibrary.cpp" />
+    <ClCompile Include="src\Loader\Injector\ManualMap\ManualMap.cpp" />
     <ClCompile Include="src\Loader\Loader.cpp" />
     <ClCompile Include="src\Loader\Web\Web.cpp" />
     <ClCompile Include="src\Loader\Zip\Zip.cpp" />
@@ -106,8 +106,8 @@
     <ClInclude Include="include\miniz\miniz.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\Loader\Bypass\Bypass.h" />
-    <ClInclude Include="src\Loader\LoadLibrary\LoadLibrary.h" />
-    <ClInclude Include="src\Loader\ManualMap\ManualMap.h" />
+    <ClInclude Include="src\Loader\Injector\LoadLibrary\LoadLibrary.h" />
+    <ClInclude Include="src\Loader\Injector\ManualMap\ManualMap.h" />
     <ClInclude Include="src\LaunchInfo.h" />
     <ClInclude Include="src\Loader\Loader.h" />
     <ClInclude Include="src\Loader\Web\Web.h" />

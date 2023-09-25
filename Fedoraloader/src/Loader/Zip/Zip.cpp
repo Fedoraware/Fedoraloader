@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <miniz/miniz.h>
 
-bool FindBySuffix(mz_zip_archive& archive, LPCSTR suffix, mz_uint& fileIndex)
+bool FindBySuffix(mz_zip_archive& archive, LPCSTR suffix, mz_uint& outIndex)
 {
 	mz_zip_archive_file_stat fileStat;
 	for (mz_uint i = 0; i < archive.m_total_files; i++)
@@ -18,7 +18,7 @@ bool FindBySuffix(mz_zip_archive& archive, LPCSTR suffix, mz_uint& fileIndex)
 		const auto curFile = std::string(fileStat.m_filename);
 		if (curFile.ends_with(suffix))
 		{
-			fileIndex = i;
+			outIndex = i;
 			return true;
 		}
 	}
@@ -28,7 +28,7 @@ bool FindBySuffix(mz_zip_archive& archive, LPCSTR suffix, mz_uint& fileIndex)
 
 void Zip::UnpackFile(Binary& file)
 {
-	mz_zip_archive zipArchive{};
+	mz_zip_archive zipArchive = {};
 
 	// Init zip reader
 	if (!mz_zip_reader_init_mem(&zipArchive, file.Data, file.Size, 0))

@@ -2,8 +2,8 @@
 #include "Web/Web.h"
 #include "Zip/Zip.h"
 #include "Bypass/Bypass.h"
-#include "LoadLibrary/LoadLibrary.h"
-#include "ManualMap/ManualMap.h"
+#include "Injector/LoadLibrary/LoadLibrary.h"
+#include "Injector/ManualMap/ManualMap.h"
 #include "../Utils/Utils.h"
 
 #include <fstream>

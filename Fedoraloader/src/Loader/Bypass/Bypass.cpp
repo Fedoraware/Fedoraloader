@@ -1,6 +1,6 @@
 #include "Bypass.h"
 
-#include "../ManualMap/ManualMap.h"
+#include "../Injector/ManualMap/ManualMap.h"
 #include "../../Utils/Utils.h"
 #include "../../../resource.h"
 

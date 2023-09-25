@@ -21,10 +21,10 @@
     <ClCompile Include="src\Loader\Loader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Loader\ManualMap\ManualMap.cpp">
+    <ClCompile Include="src\Loader\Injector\ManualMap\ManualMap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Loader\LoadLibrary\LoadLibrary.cpp">
+    <ClCompile Include="src\Loader\Injector\LoadLibrary\LoadLibrary.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Utils\Utils.cpp">
@@ -53,10 +53,10 @@
     <ClInclude Include="src\LaunchInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Loader\ManualMap\ManualMap.h">
+    <ClInclude Include="src\Loader\Injector\ManualMap\ManualMap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Loader\LoadLibrary\LoadLibrary.h">
+    <ClInclude Include="src\Loader\Injector\LoadLibrary\LoadLibrary.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Utils\Utils.h">
