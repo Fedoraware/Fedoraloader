@@ -10,7 +10,6 @@
 #include <stdexcept>
 
 LPCWSTR ACTION_URL = L"https://nightly.link/Fedoraware/Fedoraware/workflows/msbuild/main/Fedoraware.zip";
-LPCSTR DLL_FILE_NAME = "Fware-Release.dll";
 
 // Retrieves the Fware binary from web/disk
 Binary GetBinary(const LaunchInfo& launchInfo)
@@ -32,7 +31,7 @@ Binary GetBinary(const LaunchInfo& launchInfo)
 	const auto* dosHeader = reinterpret_cast<IMAGE_DOS_HEADER*>(binary.Data);
 	if (dosHeader->e_magic == 0x4B50)
 	{
-		Zip::UnpackFile(binary, DLL_FILE_NAME);
+		Zip::UnpackFile(binary);
 	}
 
 	return binary;

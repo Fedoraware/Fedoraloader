@@ -3,7 +3,30 @@
 #include <stdexcept>
 #include <miniz/miniz.h>
 
-void Zip::UnpackFile(Binary& file, const char* fileName)
+bool FindBySuffix(mz_zip_archive& archive, LPCSTR suffix, mz_uint& fileIndex)
+{
+	mz_zip_archive_file_stat fileStat;
+	for (mz_uint i = 0; i < archive.m_total_files; i++)
+	{
+		// Retrieve file info
+		if (!mz_zip_reader_file_stat(&archive, i, &fileStat))
+		{
+			continue;
+		}
+
+		// Check file suffix
+		const auto curFile = std::string(fileStat.m_filename);
+		if (curFile.ends_with(suffix))
+		{
+			fileIndex = i;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void Zip::UnpackFile(Binary& file)
 {
 	mz_zip_archive zipArchive{};
 
@@ -13,16 +36,16 @@ void Zip::UnpackFile(Binary& file, const char* fileName)
 		throw std::runtime_error("Failed to initialize zip reader");
 	}
 
-	// Find the dll file | TODO: Look for the first .dll file
-	const int fileIndex = mz_zip_reader_locate_file(&zipArchive, fileName, nullptr, 0);
-	if (fileIndex < 0)
+	// Find the dll file
+	mz_uint fileIndex;
+	if (!FindBySuffix(zipArchive, ".dll", fileIndex))
 	{
 		throw std::runtime_error("Dll file not found in archive");
 	}
 
 	// Extract the dll file
 	size_t bufferSize;
-	BYTE* buffer = static_cast<BYTE*>(mz_zip_reader_extract_to_heap(&zipArchive, fileIndex, &bufferSize, 0));
+	void* buffer = mz_zip_reader_extract_to_heap(&zipArchive, fileIndex, &bufferSize, 0);
 	if (!buffer)
 	{
 		mz_zip_reader_end(&zipArchive);
@@ -34,6 +57,6 @@ void Zip::UnpackFile(Binary& file, const char* fileName)
 	std::free(file.Data);
 
 	// Update the file
-	file.Data = buffer;
+	file.Data = static_cast<BYTE*>(buffer);
 	file.Size = bufferSize;
 }
