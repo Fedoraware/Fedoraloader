@@ -28,7 +28,7 @@ bool FindBySuffix(mz_zip_archive& archive, LPCSTR suffix, mz_uint& outIndex)
 
 void Zip::UnpackFile(Binary& file)
 {
-	mz_zip_archive zipArchive = {};
+	mz_zip_archive zipArchive{};
 
 	// Init zip reader
 	if (!mz_zip_reader_init_mem(&zipArchive, file.Data, file.Size, 0))
