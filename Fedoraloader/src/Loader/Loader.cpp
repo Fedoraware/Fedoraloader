@@ -8,7 +8,6 @@
 
 #include <fstream>
 #include <stdexcept>
-#include <shellapi.h>
 
 LPCWSTR ACTION_URL = L"https://nightly.link/Fedoraware/Fedoraware/workflows/msbuild/main/Fedoraware.zip";
 LPCSTR DLL_FILE_NAME = "Fware-Release.dll";
