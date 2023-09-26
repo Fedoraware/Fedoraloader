@@ -13,10 +13,10 @@ Binary Web::DownloadFile(LPCWSTR url)
 	}
 
 	// Open the connection
-	const HINTERNET hConnect = InternetOpenUrlW(nullptr, url, nullptr, 0, INTERNET_FLAG_RELOAD, 0);
+	const HINTERNET hConnect = InternetOpenUrlW(hInternet, url, nullptr, 0, INTERNET_FLAG_RELOAD, 0);
 	if (!hConnect)
 	{
-		throw std::system_error(GetLastError(), std::system_category(), "Failed to initialize connection");
+		throw std::system_error(GetLastError(), std::system_category(), "Failed to open URL");
 	}
 
 	BYTE* fileData = nullptr;

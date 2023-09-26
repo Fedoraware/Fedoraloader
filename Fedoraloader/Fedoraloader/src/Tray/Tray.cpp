@@ -7,6 +7,7 @@
 #include "../Loader/Loader.h"
 
 #include <stdexcept>
+#include <system_error>
 #include <unordered_map>
 
 #define WM_TRAY (WM_USER + 1)
@@ -159,7 +160,7 @@ void CreateTray(HINSTANCE hInstance)
 	g_WindowHandle = CreateWindow(g_WindowClass.lpszClassName, TEXT("Fedoraloader"), 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, hInstance, NULL);
 	if (g_WindowHandle == nullptr || g_WindowHandle == INVALID_HANDLE_VALUE)
 	{
-		throw std::runtime_error("Failed to create tray window");
+		throw std::system_error(GetLastError(), std::system_category(), "Failed to create tray window");
 	}
 
 	// Allow dark mode
