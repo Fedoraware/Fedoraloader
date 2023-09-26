@@ -5,6 +5,8 @@ VisualStudioVersion = 17.7.34024.191
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Fedoraloader", "Fedoraloader\Fedoraloader.vcxproj", "{0E5F143E-CB58-49B0-B7EB-335BABFCED02}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VAC-Bypass", "VAC-Bypass\VAC-Bypass.vcxproj", "{570CD524-DFD6-4C22-85FE-8116F8DD4682}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -15,6 +17,10 @@ Global
 		{0E5F143E-CB58-49B0-B7EB-335BABFCED02}.Debug|x86.Build.0 = Debug|Win32
 		{0E5F143E-CB58-49B0-B7EB-335BABFCED02}.Release|x86.ActiveCfg = Release|Win32
 		{0E5F143E-CB58-49B0-B7EB-335BABFCED02}.Release|x86.Build.0 = Release|Win32
+		{570CD524-DFD6-4C22-85FE-8116F8DD4682}.Debug|x86.ActiveCfg = Debug|Win32
+		{570CD524-DFD6-4C22-85FE-8116F8DD4682}.Debug|x86.Build.0 = Debug|Win32
+		{570CD524-DFD6-4C22-85FE-8116F8DD4682}.Release|x86.ActiveCfg = Release|Win32
+		{570CD524-DFD6-4C22-85FE-8116F8DD4682}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
