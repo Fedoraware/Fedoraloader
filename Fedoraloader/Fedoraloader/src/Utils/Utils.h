@@ -24,6 +24,7 @@ namespace Utils
 	Binary GetBinaryResource(WORD id);
 
 	// STL & WinApi utils
+	bool IsElevated();
 	LPCWSTR CopyString(LPCWSTR src);
 	void GetVersionNumbers(LPDWORD major, LPDWORD minor, LPDWORD build);
 }

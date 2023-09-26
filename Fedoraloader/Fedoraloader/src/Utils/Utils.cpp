@@ -183,6 +183,26 @@ Binary Utils::GetBinaryResource(WORD id)
 	};
 }
 
+bool Utils::IsElevated()
+{
+	HANDLE hToken;
+	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken))
+	{
+		return false;
+	}
+
+	TOKEN_ELEVATION elevation;
+	DWORD dwSize;
+	if (!GetTokenInformation(hToken, TokenElevation, &elevation, sizeof(elevation), &dwSize))
+	{
+		CloseHandle(hToken);
+		return false;
+	}
+
+	CloseHandle(hToken);
+	return elevation.TokenIsElevated != 0;
+}
+
 LPCWSTR Utils::CopyString(LPCWSTR src)
 {
 	const SIZE_T size = std::wcslen(src);

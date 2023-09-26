@@ -35,6 +35,12 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 {
 	const LaunchInfo launchInfo = GetLaunchInfo();
 
+    if (!Utils::IsElevated())
+    {
+        MessageBoxA(nullptr, "Please run Fedoraloader as administrator!", "Missing elevation", MB_OK | MB_ICONWARNING);
+	    return 0;
+    }
+
     try
     {
     	if (launchInfo.Debug && launchInfo.File)
