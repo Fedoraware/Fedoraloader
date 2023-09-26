@@ -17,7 +17,7 @@ DWORD Utils::FindProcess(const char* procName)
 
 	do
 	{
-		if (strcmp(procEntry.szExeFile, procName) == 0)
+		if (_strcmpi(procEntry.szExeFile, procName) == 0)
 		{
 			processId = procEntry.th32ProcessID;
 			break;
@@ -113,7 +113,7 @@ bool Utils::WaitForModule(DWORD processId, LPCSTR moduleName, DWORD sTimeout)
 		{
             do
 			{
-                if (!strcmp(moduleEntry.szModule, moduleName))
+                if (!_strcmpi(moduleEntry.szModule, moduleName))
 				{
                     moduleFound = true;
                     break;

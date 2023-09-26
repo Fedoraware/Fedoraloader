@@ -41,7 +41,7 @@ void Bypass::Run()
 
 	// Start steam
 	const LPCWSTR steamPath = GetSteamPath();
-	const auto cmdLine = std::format(L"\"{}\" -applaunch 440", steamPath);
+	const auto cmdLine = std::format(L"\"{:s}\" -applaunch 440", steamPath);
 	delete[] steamPath;
 
 	STARTUPINFOW startupInfo = {};
