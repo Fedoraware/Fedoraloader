@@ -11,13 +11,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="dllmain.c" />
-    <ClCompile Include="Hooks.c" />
-    <ClCompile Include="Utils.c" />
+    <ClCompile Include="src\DllMain.c" />
+    <ClCompile Include="src\Hooks\Hooks.c" />
+    <ClCompile Include="src\Utils\Utils.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Hooks.h" />
-    <ClInclude Include="Utils.h" />
+    <ClInclude Include="src\Hooks\Hooks.h" />
+    <ClInclude Include="src\Utils\Utils.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

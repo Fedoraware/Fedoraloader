@@ -1,5 +1,5 @@
-#include "Hooks.h"
-#include "Utils.h"
+#include "Hooks/Hooks.h"
+#include "Utils/Utils.h"
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {

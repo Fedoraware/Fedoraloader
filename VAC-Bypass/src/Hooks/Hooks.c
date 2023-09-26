@@ -1,7 +1,7 @@
 #include <Windows.h>
 
 #include "Hooks.h"
-#include "Utils.h"
+#include "../Utils/Utils.h"
 
 HMODULE WINAPI Hooks_LoadLibraryExW(LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 {

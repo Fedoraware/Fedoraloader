@@ -15,21 +15,21 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="dllmain.c">
+    <ClCompile Include="src\DllMain.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Hooks.c">
+    <ClCompile Include="src\Hooks\Hooks.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Utils.c">
+    <ClCompile Include="src\Utils\Utils.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Hooks.h">
+    <ClInclude Include="src\Hooks\Hooks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Utils.h">
+    <ClInclude Include="src\Utils\Utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
