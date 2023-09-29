@@ -29,6 +29,7 @@ enum ACTION_ID {
 
 	IDM_LOAD = IDM_FIRST,
 	IDM_LOADEXIT,
+	IDM_NOBYPASS,
 	IDM_ABOUT,
 	IDM_EXIT
 };
@@ -36,6 +37,7 @@ enum ACTION_ID {
 NOTIFYICONDATA g_NotifyData;
 WNDCLASS g_WindowClass;
 HWND g_WindowHandle;
+bool g_NoBypass = false;
 
 std::unordered_map<int, std::function<void()>> g_MenuCallbacks;
 
@@ -69,6 +71,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			AppendMenu(hPopup, MF_STRING, IDM_LOAD, TEXT("Load"));
 			AppendMenu(hPopup, MF_STRING, IDM_LOADEXIT, TEXT("Load + Exit"));
 			AppendMenu(hPopup, MF_SEPARATOR, 1, nullptr);
+			AppendMenu(hPopup, MF_STRING | (g_NoBypass ? 0 : MF_CHECKED), IDM_NOBYPASS, TEXT("VAC-Bypass"));
 			AppendMenu(hPopup, MF_STRING, IDM_ABOUT, TEXT("About"));
 			AppendMenu(hPopup, MF_STRING, IDM_EXIT, TEXT("Exit"));
 
@@ -187,19 +190,25 @@ void LoadSafe(const LaunchInfo& launchInfo)
 	}
 }
 
-void RegisterCallbacks(const LaunchInfo& launchInfo)
+void RegisterCallbacks(LaunchInfo& launchInfo)
 {
 	// "Load" button
-	g_MenuCallbacks[IDM_LOAD] = [launchInfo]
+	g_MenuCallbacks[IDM_LOAD] = [&launchInfo]
 	{
 		LoadSafe(launchInfo);
 	};
 
 	// "Load + Exit" button
-	g_MenuCallbacks[IDM_LOADEXIT] = [launchInfo]
+	g_MenuCallbacks[IDM_LOADEXIT] = [&launchInfo]
 	{
 		LoadSafe(launchInfo);
 		PostQuitMessage(0);
+	};
+
+	// "VAC-Bypass" toggle
+	g_MenuCallbacks[IDM_NOBYPASS] = [&launchInfo]
+	{
+		launchInfo.NoBypass = g_NoBypass = !g_NoBypass;
 	};
 
 	// "About" button
@@ -225,9 +234,10 @@ void RegisterCallbacks(const LaunchInfo& launchInfo)
 	};
 }
 
-void Tray::Run(const LaunchInfo& launchInfo, HINSTANCE hInstance)
+void Tray::Run(LaunchInfo& launchInfo, HINSTANCE hInstance)
 {
 	// Create tray menu
+	g_NoBypass = launchInfo.NoBypass;
 	RegisterCallbacks(launchInfo);
 	CreateTray(hInstance);
 

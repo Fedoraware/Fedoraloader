@@ -3,5 +3,5 @@
 
 namespace Tray
 {
-	void Run(const LaunchInfo& launchInfo, HINSTANCE hInstance);
+	void Run(LaunchInfo& launchInfo, HINSTANCE hInstance);
 }
