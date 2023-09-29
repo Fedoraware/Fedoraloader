@@ -10,8 +10,7 @@ This is a complete rewrite in C++ 20 of Fedoraloader in an attempt to fix previo
 The previous version was written in C# and can be found [here](https://github.com/Fedoraware/Fedoraloader-Legacy).
 
 > [!NOTE]  
-> VAC-Bypass is disabled by default to prevent issues with other game.
-> Check the options section below to enable it.
+> VAC-Bypass is enabled by default and might cause issues with other games such as CS2.
 
 ## Usage
 
@@ -50,7 +49,7 @@ To use them, create a shortcut to the loader and add the arguments to the target
 | Argument | Description |
 | --- | --- |
 | `-silent` | Run the loader without GUI |
-| `-usebypass` | Restart Steam with VAC bypass |
+| `-nobypass` | Don't restart Steam with VAC-Bypass |
 | `-debug` | Use LoadLibrary-Injection (only works with local files) |
 | `-file "..."` | Custom local file (.zip or .dll) |
 | `-url "..."` | Custom download URL (.zip or .dll) |

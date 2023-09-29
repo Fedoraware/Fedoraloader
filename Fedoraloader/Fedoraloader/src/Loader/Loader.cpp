@@ -48,7 +48,7 @@ bool Loader::Load(const LaunchInfo& launchInfo)
 	}
 
 	// (Optional) Restart Steam/TF2 and inject VAC Bypass
-	if (launchInfo.UseBypass)
+	if (!launchInfo.NoBypass)
 	{
 		Bypass::Run();
 	}

@@ -169,9 +169,9 @@ void CreateTray(HINSTANCE hInstance)
 
 void LoadSafe(const LaunchInfo& launchInfo)
 {
-	ShowNotification("Loading...", launchInfo.UseBypass
-		                               ? "Please wait until the game is ready"
-		                               : "Please open the game now");
+	ShowNotification("Loading...", launchInfo.NoBypass
+		                               ? "Please open the game now"
+		                               : "Please wait until the game is ready");
 
 	try
 	{
