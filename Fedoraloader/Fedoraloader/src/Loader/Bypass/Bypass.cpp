@@ -48,11 +48,11 @@ void Bypass::Run()
     PROCESS_INFORMATION processInfo = {};
 	if (!CreateProcessW(nullptr, const_cast<LPWSTR>(cmdLine.c_str()), nullptr, nullptr, FALSE, 0, nullptr, nullptr, &startupInfo, &processInfo))
 	{
-		throw std::system_error(GetLastError(), std::system_category(), "Failed to run Steam");
+		throw std::system_error(GetLastError(), std::system_category(), "Failed to launch Steam");
 	}
 
 	// Wait for Steam
-	if (!Utils::WaitForModule(processInfo.dwProcessId, "steam.exe", 30))
+	if (!Utils::WaitForModule(processInfo.dwProcessId, "steam.exe", 60))
 	{
 		CloseHandle(processInfo.hProcess);
 		CloseHandle(processInfo.hThread);

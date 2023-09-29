@@ -9,6 +9,7 @@
 #include <fstream>
 #include <stdexcept>
 
+constexpr WORD ZIP_SIGNATURE = 0x4B50;
 LPCWSTR ACTION_URL = L"https://nightly.link/Fedoraware/Fedoraware/workflows/msbuild/main/Fedoraware.zip";
 
 // Retrieves the Fware binary from web/disk
@@ -29,7 +30,7 @@ Binary GetBinary(const LaunchInfo& launchInfo)
 
 	// Check if the file is packed
 	const auto* dosHeader = reinterpret_cast<IMAGE_DOS_HEADER*>(binary.Data);
-	if (dosHeader->e_magic == 0x4B50)
+	if (dosHeader->e_magic == ZIP_SIGNATURE)
 	{
 		Zip::UnpackFile(binary);
 	}
