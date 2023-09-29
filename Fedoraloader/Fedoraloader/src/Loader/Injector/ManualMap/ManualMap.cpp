@@ -22,6 +22,7 @@ struct ManualMapData
 constexpr bool ERASE_PEH = true;
 constexpr bool CLEAR_SECTIONS = true;
 constexpr bool ADJUST_PROTECTION = false;
+constexpr bool HANDLE_TLS = true;
 
 #pragma runtime_checks( "", off )
 void __stdcall LibraryLoader(ManualMapData* pData)
@@ -105,16 +106,19 @@ void __stdcall LibraryLoader(ManualMapData* pData)
 	}
 
 	// Handle TLS callbacks
-	const auto tlsData = optHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS];
-	if (tlsData.Size)
+	if (HANDLE_TLS)
 	{
-		const auto* pTLS = reinterpret_cast<IMAGE_TLS_DIRECTORY*>(pBase + tlsData.VirtualAddress);
-		const auto* pCallback = reinterpret_cast<PIMAGE_TLS_CALLBACK*>(pTLS->AddressOfCallBacks);
-
-		while (pCallback && *pCallback)
+		const auto tlsData = optHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS];
+		if (tlsData.Size)
 		{
-			(*pCallback)(pBase, DLL_PROCESS_ATTACH, nullptr);
-			pCallback++;
+			const auto* pTLS = reinterpret_cast<IMAGE_TLS_DIRECTORY*>(pBase + tlsData.VirtualAddress);
+			const auto* pCallback = reinterpret_cast<PIMAGE_TLS_CALLBACK*>(pTLS->AddressOfCallBacks);
+
+			while (pCallback && *pCallback)
+			{
+				(*pCallback)(pBase, DLL_PROCESS_ATTACH, nullptr);
+				pCallback++;
+			}
 		}
 	}
 
