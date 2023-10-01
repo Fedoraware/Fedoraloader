@@ -1,4 +1,6 @@
 #include "ManualMap.h"
+#include "Native/Native.h"
+
 #include <cstdio>
 #include <format>
 #include <stdexcept>
@@ -16,13 +18,15 @@ struct ManualMapData
 
 	TLoadLibraryA* FnLoadLibraryA;
 	TGetProcAddress* FnGetProcAddress;
+	TRtlInsertInvertedFunctionTable* FnIIFT;
 };
 
 // Options
+constexpr bool HANDLE_TLS = true;
+constexpr bool ENABLE_EXCEPTIONS = true;
 constexpr bool ERASE_PEH = true;
 constexpr bool CLEAR_SECTIONS = true;
-constexpr bool ADJUST_PROTECTION = false;
-constexpr bool HANDLE_TLS = true;
+constexpr bool ADJUST_PROTECTION = true;
 
 #pragma runtime_checks( "", off )
 void __stdcall LibraryLoader(ManualMapData* pData)
@@ -42,6 +46,7 @@ void __stdcall LibraryLoader(ManualMapData* pData)
 	// Retrieve our function pointers
 	const auto pLoadLibraryA = pData->FnLoadLibraryA;
 	const auto pGetProcAddress = pData->FnGetProcAddress;
+	const auto pRtlInsertInvertedFunctionTable = pData->FnIIFT;
 	const auto pDllMain = reinterpret_cast<TDllMain>(pBase + optHeader->AddressOfEntryPoint);
 
 	// Base address relocation
@@ -122,6 +127,15 @@ void __stdcall LibraryLoader(ManualMapData* pData)
 		}
 	}
 
+	// Exception support
+	if (ENABLE_EXCEPTIONS)
+	{
+		if (pRtlInsertInvertedFunctionTable)
+		{
+			pRtlInsertInvertedFunctionTable(pBase, optHeader->SizeOfImage);
+		}
+	}
+
 	// Invoke original entry point
 	pDllMain(reinterpret_cast<HINSTANCE>(pBase), DLL_PROCESS_ATTACH, nullptr);
 
@@ -160,10 +174,11 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, bool waitForThread)
 	ManualMapData mapData{};
 	mapData.FnLoadLibraryA = LoadLibraryA;
 	mapData.FnGetProcAddress = GetProcAddress;
+	mapData.FnIIFT = Native::GetRtlInsertInvertedFunctionTable();
 	mapData.ImageBase = pTargetBase;
 
 	// Write file header (first 0x1000 bytes)
-	if (!WriteProcessMemory(hTarget, pTargetBase, pSrcData, 0x1000, nullptr))
+	if (!WriteProcessMemory(hTarget, pTargetBase, pSrcData, optHeader->SizeOfHeaders, nullptr))
 	{
 		VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
 		throw std::runtime_error("Failed to write PE header to target");
@@ -245,7 +260,7 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, bool waitForThread)
 		GetExitCodeProcess(hTarget, &exitCode);
 		if (exitCode != STILL_ACTIVE)
 		{
-			throw std::runtime_error(std::format("Process crashed with exit code: {:d}", exitCode));
+			throw std::runtime_error(std::format("Process crashed with exit code: {:X}", exitCode));
 		}
 
 		// Read the manual map data

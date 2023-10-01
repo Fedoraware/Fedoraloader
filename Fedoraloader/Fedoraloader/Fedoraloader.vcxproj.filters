@@ -45,6 +45,12 @@
     <ClCompile Include="src\Loader\Bypass\Bypass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Loader\Injector\ManualMap\Native\Native.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Utils\Pattern\Pattern.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Loader\Loader.h">
@@ -78,6 +84,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Loader\Bypass\Bypass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Loader\Injector\ManualMap\Native\Native.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Utils\Pattern\Pattern.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

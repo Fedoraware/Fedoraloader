@@ -95,10 +95,12 @@
     <ClCompile Include="src\Loader\Bypass\Bypass.cpp" />
     <ClCompile Include="src\Loader\Injector\LoadLibrary\LoadLibrary.cpp" />
     <ClCompile Include="src\Loader\Injector\ManualMap\ManualMap.cpp" />
+    <ClCompile Include="src\Loader\Injector\ManualMap\Native\Native.cpp" />
     <ClCompile Include="src\Loader\Loader.cpp" />
     <ClCompile Include="src\Loader\Web\Web.cpp" />
     <ClCompile Include="src\Loader\Zip\Zip.cpp" />
     <ClCompile Include="src\Tray\Tray.cpp" />
+    <ClCompile Include="src\Utils\Pattern\Pattern.cpp" />
     <ClCompile Include="src\Utils\Utils.cpp" />
     <ClCompile Include="src\WinMain.cpp" />
   </ItemGroup>
@@ -109,10 +111,12 @@
     <ClInclude Include="src\Loader\Injector\LoadLibrary\LoadLibrary.h" />
     <ClInclude Include="src\Loader\Injector\ManualMap\ManualMap.h" />
     <ClInclude Include="src\LaunchInfo.h" />
+    <ClInclude Include="src\Loader\Injector\ManualMap\Native\Native.h" />
     <ClInclude Include="src\Loader\Loader.h" />
     <ClInclude Include="src\Loader\Web\Web.h" />
     <ClInclude Include="src\Loader\Zip\Zip.h" />
     <ClInclude Include="src\Tray\Tray.h" />
+    <ClInclude Include="src\Utils\Pattern\Pattern.h" />
     <ClInclude Include="src\Utils\Utils.h" />
   </ItemGroup>
   <ItemGroup>
