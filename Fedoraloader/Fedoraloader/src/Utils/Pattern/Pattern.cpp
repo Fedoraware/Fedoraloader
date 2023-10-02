@@ -8,7 +8,7 @@ struct Section
 	DWORD Size = 0x0;
 };
 
-bool CompareByteArray(PBYTE pData, const std::vector<BYTE>& szPattern)
+bool CompareByteArray(PBYTE pData, const std::string& szPattern)
 {
 	for (size_t i = 0; i < szPattern.size(); i++, pData++)
 	{
@@ -20,7 +20,7 @@ bool CompareByteArray(PBYTE pData, const std::vector<BYTE>& szPattern)
 	return true;
 }
 
-PBYTE FindPattern(PBYTE baseAddress, DWORD dwSize, const std::vector<BYTE>& szPattern)
+PBYTE FindPattern(PBYTE baseAddress, DWORD dwSize, const std::string& szPattern)
 {
 	const PBYTE max = baseAddress + dwSize - szPattern.size();
 
@@ -35,7 +35,7 @@ PBYTE FindPattern(PBYTE baseAddress, DWORD dwSize, const std::vector<BYTE>& szPa
 	return nullptr;
 }
 
-std::optional<Section> GetTextSection(DWORD modHandle)
+std::optional<Section> GetCodeSection(DWORD modHandle)
 {
 	const auto* dosHeader = reinterpret_cast<IMAGE_DOS_HEADER*>(modHandle);
 	const auto* ntHeaders = reinterpret_cast<IMAGE_NT_HEADERS*>(modHandle + dosHeader->e_lfanew);
@@ -62,12 +62,12 @@ std::optional<Section> GetTextSection(DWORD modHandle)
 	};
 }
 
-PBYTE Pattern::Find(LPCSTR szModuleName, const std::vector<BYTE>& szPattern)
+PBYTE Pattern::Find(LPCSTR szModuleName, const std::string& szPattern)
 {
 	const auto modHandle = reinterpret_cast<DWORD>(GetModuleHandleA(szModuleName));
 	if (!modHandle) { return nullptr; }
 
-	const auto textSection = GetTextSection(modHandle);
+	const auto textSection = GetCodeSection(modHandle);
 	if (!textSection) { return nullptr; }
 
 	return FindPattern(textSection->BaseAddress, textSection->Size, szPattern);

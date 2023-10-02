@@ -1,15 +1,28 @@
 #include "Native.h"
 
 #include <format>
+#include <vector>
 
 #include "../../../../Utils/Utils.h"
 #include "../../../../Utils/Pattern/Pattern.h"
 
+// 6.1.7601: \x8B\xFF\x55\x8B\xEC\x56\x68
+
+using namespace std::string_literals;
+
+const std::vector IIFT_Patterns = {
+	"\x8B\xFF\x55\x8B\xEC\x83\xEC\x00\x53\x56\x57\x8D\x45\x00\x8B\xFA"s, // 10.0.19041.3393
+	"\x8B\xFF\x55\x8B\xEC\x83\xEC\x00\x8D\x45\x00\x53\x56\x57\x8B\xDA"s, // 10.0.10240
+};
+
 PBYTE InitRtlInsertInvertedFunctionTable()
 {
-	if (const PBYTE result = Pattern::Find("ntdll.dll", {0x8B, 0xFF, 0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x00, 0x53, 0x56, 0x57, 0x8D, 0x45, 0x00, 0x8B, 0xFA}))
+	for (const auto& pattern : IIFT_Patterns)
 	{
-		return result;
+		if (const PBYTE result = Pattern::Find("ntdll.dll", pattern))
+		{
+			return result;
+		}
 	}
 
 #ifdef _DEBUG
