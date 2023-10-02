@@ -3,5 +3,5 @@
 
 namespace MM
 {
-	bool Inject(HANDLE hTarget, const Binary& binary, bool waitForThread = true);
+	bool Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread = nullptr);
 }

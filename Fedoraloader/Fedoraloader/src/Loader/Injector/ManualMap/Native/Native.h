@@ -1,7 +1,7 @@
 #pragma once
 #include <Windows.h>
 
-typedef int(__fastcall TRtlInsertInvertedFunctionTable)(PVOID BaseAddress, ULONG ImageSize);
+using TRtlInsertInvertedFunctionTable = int(__fastcall)(PVOID BaseAddress, ULONG ImageSize);
 
 namespace Native
 {

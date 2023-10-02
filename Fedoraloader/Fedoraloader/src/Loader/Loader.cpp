@@ -71,6 +71,11 @@ bool Loader::Load(const LaunchInfo& launchInfo)
 
 bool Loader::Debug(const LaunchInfo& launchInfo)
 {
+	if (!launchInfo.File)
+	{
+		throw std::runtime_error("LoadLibrary required a file path");
+	}
+
 	// Find the game
 	const HANDLE hGame = Utils::GetProcessHandle("hl2.exe");
 	if (hGame == INVALID_HANDLE_VALUE || hGame == nullptr)

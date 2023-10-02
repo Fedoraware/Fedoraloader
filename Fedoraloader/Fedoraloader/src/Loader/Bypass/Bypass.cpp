@@ -58,11 +58,10 @@ void Bypass::Run()
 		CloseHandle(processInfo.hThread);
 		throw std::runtime_error("Timeout while waiting for Steam");
 	}
-	SuspendThread(processInfo.hThread);
 
 	// Inject VAC Bypass
 	const Binary vacBypass = Utils::GetBinaryResource(IDR_VACBYPASS);
-	MM::Inject(processInfo.hProcess, vacBypass, false);
+	MM::Inject(processInfo.hProcess, vacBypass, processInfo.hThread);
 
 	// Cleanup
 	ResumeThread(processInfo.hThread);

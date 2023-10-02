@@ -63,11 +63,11 @@ void __stdcall LibraryLoader(ManualMapData* pData)
 				const UINT nEntries = (pRelocData->SizeOfBlock - sizeof(IMAGE_BASE_RELOCATION)) / sizeof(WORD);
 				auto pRelativeInfo = reinterpret_cast<WORD*>(pRelocData + 1);
 
-				for (UINT i = 0; i < nEntries; ++i, ++pRelativeInfo)
+				for (UINT i = 0; i < nEntries; i++, pRelativeInfo++)
 				{
 					if (RELOC_FLAG(*pRelativeInfo))
 					{
-						const auto pPatch = reinterpret_cast<UINT_PTR*>(pBase + pRelocData->VirtualAddress + ((*pRelativeInfo) & 0xFFF));
+						const auto pPatch = reinterpret_cast<UINT_PTR*>(pBase + pRelocData->VirtualAddress + (*pRelativeInfo & 0xFFF));
 						*pPatch += reinterpret_cast<UINT_PTR>(locationDelta);
 					}
 				}
@@ -145,8 +145,10 @@ void __stdcall LibraryLoader(ManualMapData* pData)
 DWORD __stdcall Stub() { return 0; }
 #pragma runtime_checks( "", restore )
 
-bool MM::Inject(HANDLE hTarget, const Binary& binary, bool waitForThread)
+bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 {
+	if (mainThread) { SuspendThread(mainThread); }
+
 	DWORD flOldProtect = 0;
 	BYTE* pSrcData = binary.Data;
 
@@ -177,7 +179,7 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, bool waitForThread)
 	mapData.FnIIFT = Native::GetRtlInsertInvertedFunctionTable();
 	mapData.ImageBase = pTargetBase;
 
-	// Write file header (first 0x1000 bytes)
+	// Write file header
 	if (!WriteProcessMemory(hTarget, pTargetBase, pSrcData, optHeader->SizeOfHeaders, nullptr))
 	{
 		VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
@@ -241,21 +243,19 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, bool waitForThread)
 		throw std::runtime_error("Failed to create the remote thread");
 	}
 
-	if (!waitForThread)
-	{
-		CloseHandle(hThread);
-		return true;
-	}
+	if (mainThread) { ResumeThread(mainThread); }
 
 	// Wait for the library loader
-	WaitForSingleObject(hThread, 15 * 1000);
+	if (WaitForSingleObject(hThread, 20 * 1000) != WAIT_OBJECT_0)
+	{
+		CloseHandle(hThread);
+		throw std::runtime_error("Timeout while waiting for thread");
+	}
+
 	CloseHandle(hThread);
 
-	// Wait for the target thread
-	HINSTANCE hCheck = nullptr;
-	while (!hCheck)
+	// Check injection result
 	{
-		// Retrieve the exit code
 		DWORD exitCode = 0;
 		GetExitCodeProcess(hTarget, &exitCode);
 		if (exitCode != STILL_ACTIVE)
@@ -266,17 +266,15 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, bool waitForThread)
 		// Read the manual map data
 		ManualMapData resultData{};
 		ReadProcessMemory(hTarget, pMapData, &resultData, sizeof(resultData), nullptr);
-		hCheck = resultData.Module;
 
-		if (hCheck == reinterpret_cast<HINSTANCE>(0x404040))
+		// Check the error code (TODO: Include an error code)
+		if (resultData.Module == reinterpret_cast<HINSTANCE>(0x404040))
 		{
 			VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
 			VirtualFreeEx(hTarget, pMapData, 0, MEM_RELEASE);
 			VirtualFreeEx(hTarget, pLoader, 0, MEM_RELEASE);
 			throw std::runtime_error("Manual map data was invalid");
 		}
-
-		Sleep(10);
 	}
 
 	const BYTE* nullBuffer = new BYTE[1024 * 1024 * 20]{};
