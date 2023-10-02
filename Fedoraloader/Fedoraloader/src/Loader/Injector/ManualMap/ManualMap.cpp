@@ -11,10 +11,17 @@ using TLoadLibraryA = decltype(LoadLibraryA);
 using TGetProcAddress = decltype(GetProcAddress);
 using TDllMain = BOOL(WINAPI*)(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
 
+enum class MapResult : short
+{
+	Unknown = 0,
+	Success = 1,
+	NoData = 2
+};
+
 struct ManualMapData
 {
 	BYTE* ImageBase;
-	HINSTANCE Module;
+	MapResult Result = MapResult::Unknown;
 
 	TLoadLibraryA* FnLoadLibraryA;
 	TGetProcAddress* FnGetProcAddress;
@@ -33,7 +40,7 @@ void __stdcall LibraryLoader(ManualMapData* pData)
 {
 	if (!pData)
 	{
-		pData->Module = reinterpret_cast<HINSTANCE>(0x404040);
+		pData->Result = MapResult::NoData;
 		return;
 	}
 
@@ -139,7 +146,7 @@ void __stdcall LibraryLoader(ManualMapData* pData)
 	// Invoke original entry point
 	pDllMain(reinterpret_cast<HINSTANCE>(pBase), DLL_PROCESS_ATTACH, nullptr);
 
-	pData->Module = reinterpret_cast<HINSTANCE>(pBase);
+	pData->Result = MapResult::Success;
 }
 
 DWORD __stdcall Stub() { return 0; }
@@ -188,7 +195,7 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 
 	// Write sections
 	auto pSectionHeader = IMAGE_FIRST_SECTION(ntHeaders);
-	for (UINT i = 0; i < fileHeader->NumberOfSections; ++i, ++pSectionHeader)
+	for (UINT i = 0; i < fileHeader->NumberOfSections; i++, pSectionHeader++)
 	{
 		if (pSectionHeader->SizeOfRawData)
 		{
@@ -216,7 +223,8 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 	}
 
 	// Write library loader
-	const LPVOID pLoader = VirtualAllocEx(hTarget, nullptr, 0x1000, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	const SIZE_T loaderSize = reinterpret_cast<DWORD>(Stub) - reinterpret_cast<DWORD>(LibraryLoader);
+	const LPVOID pLoader = VirtualAllocEx(hTarget, nullptr, loaderSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 	if (!pLoader)
 	{
 		VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
@@ -224,7 +232,6 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 		throw std::runtime_error("Failed to allocate library loader memory");
 	}
 
-	const SIZE_T loaderSize = reinterpret_cast<DWORD>(Stub) - reinterpret_cast<DWORD>(LibraryLoader);
 	if (!WriteProcessMemory(hTarget, pLoader, &LibraryLoader, loaderSize, nullptr))
 	{
 		VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
@@ -267,8 +274,8 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 		ManualMapData resultData{};
 		ReadProcessMemory(hTarget, pMapData, &resultData, sizeof(resultData), nullptr);
 
-		// Check the error code (TODO: Include an error code)
-		if (resultData.Module == reinterpret_cast<HINSTANCE>(0x404040))
+		// Check the error code
+		if (resultData.Result == MapResult::NoData)
 		{
 			VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
 			VirtualFreeEx(hTarget, pMapData, 0, MEM_RELEASE);
@@ -286,13 +293,13 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 	// (Optional) Clear PE header
 	if (ERASE_PEH)
 	{
-		if (!WriteProcessMemory(hTarget, pTargetBase, nullBuffer, 0x1000, nullptr))
+		if (!WriteProcessMemory(hTarget, pTargetBase, nullBuffer, optHeader->SizeOfHeaders, nullptr))
 		{
 			std::printf("Failed to erase PE header\n");
 		}
 	}
 
-	// (Optional) Clear unneeded sections
+	// (Optional) Clear unneeded sections | TODO: Check flags
 	if (CLEAR_SECTIONS)
 	{
 		pSectionHeader = IMAGE_FIRST_SECTION(ntHeaders);
@@ -345,7 +352,7 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 	}
 
 	// Cleanup
-	WriteProcessMemory(hTarget, pLoader, nullBuffer, 0x1000, nullptr);
+	WriteProcessMemory(hTarget, pLoader, nullBuffer, loaderSize, nullptr);
 	VirtualFreeEx(hTarget, pLoader, 0, MEM_RELEASE);
 	VirtualFreeEx(hTarget, pMapData, 0, MEM_RELEASE);
 	delete[] nullBuffer;

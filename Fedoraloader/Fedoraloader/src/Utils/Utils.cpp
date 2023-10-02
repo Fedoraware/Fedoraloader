@@ -221,7 +221,7 @@ void Utils::GetVersionNumbers(LPDWORD major, LPDWORD minor, LPDWORD build)
 	static TRtlGetNtVersionNumbers* fn = nullptr;
 	if (fn == nullptr)
 	{
-		const auto hMod = GetModuleHandle("ntdll.dll");
+		const auto hMod = GetModuleHandleA("ntdll.dll");
 		if (hMod == nullptr) { return; }
 
 		fn = reinterpret_cast<TRtlGetNtVersionNumbers*>(GetProcAddress(hMod, "RtlGetNtVersionNumbers"));
