@@ -152,6 +152,44 @@ void __stdcall LibraryLoader(ManualMapData* pData)
 DWORD __stdcall Stub() { return 0; }
 #pragma runtime_checks( "", restore )
 
+DWORD GetSectionProtection(DWORD characteristics)
+{
+	DWORD dwResult;
+
+    if(characteristics & IMAGE_SCN_MEM_EXECUTE) 
+    {
+        if(characteristics & IMAGE_SCN_MEM_WRITE)
+        {
+	        dwResult = PAGE_EXECUTE_READWRITE;
+        }
+        else if(characteristics & IMAGE_SCN_MEM_READ)
+        {
+	        dwResult = PAGE_EXECUTE_READ;
+        }
+        else
+        {
+	        dwResult = PAGE_EXECUTE;
+        }
+    } 
+    else
+    {
+        if(characteristics & IMAGE_SCN_MEM_WRITE)
+        {
+	        dwResult = PAGE_READWRITE;
+        }
+        else if(characteristics & IMAGE_SCN_MEM_READ)
+        {
+	        dwResult = PAGE_READONLY;
+        }
+        else
+        {
+	        dwResult = PAGE_NOACCESS;
+        }
+    }
+
+    return dwResult;
+}
+
 bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 {
 	if (mainThread) { SuspendThread(mainThread); }
@@ -180,12 +218,13 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 	VirtualProtectEx(hTarget, pTargetBase, optHeader->SizeOfImage, PAGE_EXECUTE_READWRITE, &flOldProtect);
 
 	// Init manual map data
-	ManualMapData mapData{};
-	mapData.FnLoadLibraryA = LoadLibraryA;
-	mapData.FnGetProcAddress = GetProcAddress;
-	mapData.FnIIFT = Native::GetRtlInsertInvertedFunctionTable();
-	mapData.ImageBase = pTargetBase;
-
+	const ManualMapData mapData{
+		.ImageBase = pTargetBase,
+		.FnLoadLibraryA = LoadLibraryA,
+		.FnGetProcAddress = GetProcAddress,
+		.FnIIFT = Native::GetRtlInsertInvertedFunctionTable()
+	};
+	
 	// Write file header
 	if (!WriteProcessMemory(hTarget, pTargetBase, pSrcData, optHeader->SizeOfHeaders, nullptr))
 	{
@@ -197,7 +236,9 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 	auto pSectionHeader = IMAGE_FIRST_SECTION(ntHeaders);
 	for (UINT i = 0; i < fileHeader->NumberOfSections; i++, pSectionHeader++)
 	{
-		if (pSectionHeader->SizeOfRawData)
+		if (pSectionHeader->SizeOfRawData == 0) { continue; }
+
+		if (pSectionHeader->Characteristics & (IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE))
 		{
 			if (!WriteProcessMemory(hTarget, pTargetBase + pSectionHeader->VirtualAddress, pSrcData + pSectionHeader->PointerToRawData, pSectionHeader->SizeOfRawData, nullptr))
 			{
@@ -299,23 +340,19 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 		}
 	}
 
-	// (Optional) Clear unneeded sections | TODO: Check flags
+	// (Optional) Clear unneeded sections
 	if (CLEAR_SECTIONS)
 	{
 		pSectionHeader = IMAGE_FIRST_SECTION(ntHeaders);
 		for (UINT i = 0; i != fileHeader->NumberOfSections; ++i, ++pSectionHeader)
 		{
-			if (pSectionHeader->Misc.VirtualSize)
+			const DWORD discardable = pSectionHeader->Characteristics & IMAGE_SCN_MEM_DISCARDABLE;
+			if (pSectionHeader->Misc.VirtualSize && discardable)
 			{
 				const auto sectionName = reinterpret_cast<const char*>(pSectionHeader->Name);
-				if (strcmp(sectionName, ".pdata") == 0 ||
-					strcmp(sectionName, ".rsrc") == 0 ||
-					strcmp(sectionName, ".reloc") == 0)
+				if (!WriteProcessMemory(hTarget, pTargetBase + pSectionHeader->VirtualAddress, nullBuffer, pSectionHeader->Misc.VirtualSize, nullptr))
 				{
-					if (!WriteProcessMemory(hTarget, pTargetBase + pSectionHeader->VirtualAddress, nullBuffer, pSectionHeader->Misc.VirtualSize, nullptr))
-					{
-						std::printf("Failed to clear unneeded section %s\n", sectionName);
-					}
+					std::printf("Failed to discard section: %s\n", sectionName);
 				}
 			}
 		}
@@ -325,21 +362,21 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 	if (ADJUST_PROTECTION)
 	{
 		pSectionHeader = IMAGE_FIRST_SECTION(ntHeaders);
-		for (UINT i = 0; i != fileHeader->NumberOfSections; ++i, ++pSectionHeader)
+		for (UINT i = 0; i != fileHeader->NumberOfSections; i++, pSectionHeader++)
 		{
-			if (pSectionHeader->Misc.VirtualSize)
+			if (pSectionHeader->Misc.VirtualSize == 0) { continue; }
+
+			const DWORD flNewProtect = GetSectionProtection(pSectionHeader->Characteristics);
+			if (flNewProtect == PAGE_NOACCESS)
 			{
-				DWORD flNewProtect = PAGE_READONLY;
-
-				if ((pSectionHeader->Characteristics & IMAGE_SCN_MEM_WRITE) > 0)
+				// Free NO_ACCESS page
+				if (!VirtualFreeEx(hTarget, pTargetBase + pSectionHeader->VirtualAddress, pSectionHeader->Misc.VirtualSize, MEM_DECOMMIT))
 				{
-					flNewProtect = PAGE_READWRITE;
+					std::printf("Failed to set %s to %lX\n", reinterpret_cast<char*>(pSectionHeader->Name), flNewProtect);
 				}
-				else if ((pSectionHeader->Characteristics & IMAGE_SCN_MEM_EXECUTE) > 0)
-				{
-					flNewProtect = PAGE_EXECUTE_READ;
-				}
-
+			}
+			else
+			{
 				// Change protection
 				if (!VirtualProtectEx(hTarget, pTargetBase + pSectionHeader->VirtualAddress, pSectionHeader->Misc.VirtualSize, flNewProtect, &flOldProtect))
 				{
@@ -347,8 +384,6 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 				}
 			}
 		}
-
-		VirtualProtectEx(hTarget, pTargetBase, IMAGE_FIRST_SECTION(ntHeaders)->VirtualAddress, PAGE_READONLY, &flOldProtect);
 	}
 
 	// Cleanup
