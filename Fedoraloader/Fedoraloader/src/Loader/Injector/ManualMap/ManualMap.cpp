@@ -5,8 +5,6 @@
 #include <format>
 #include <stdexcept>
 
-#define RELOC_FLAG(relInfo) (((relInfo) >> 0x0C) == IMAGE_REL_BASED_HIGHLOW)
-
 using TLoadLibraryA = decltype(LoadLibraryA);
 using TGetProcAddress = decltype(GetProcAddress);
 using TDllMain = BOOL(WINAPI*)(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
@@ -86,12 +84,16 @@ void __stdcall LibraryLoader(ManualMapData* pData)
 
 				for (UINT i = 0; i < nEntries; i++, pRelativeInfo++)
 				{
-					if (RELOC_FLAG(*pRelativeInfo))
+					const int type = *pRelativeInfo >> 0xC;
+					const int offset = *pRelativeInfo & 0xFFF;
+
+					if (type == IMAGE_REL_BASED_HIGHLOW)
 					{
-						const auto pPatch = reinterpret_cast<UINT_PTR*>(pBase + pRelocData->VirtualAddress + (*pRelativeInfo & 0xFFF));
+						const auto pPatch = reinterpret_cast<UINT_PTR*>(pBase + pRelocData->VirtualAddress + offset);
 						*pPatch += reinterpret_cast<UINT_PTR>(locationDelta);
 					}
 				}
+
 				pRelocData = reinterpret_cast<IMAGE_BASE_RELOCATION*>(reinterpret_cast<BYTE*>(pRelocData) + pRelocData->SizeOfBlock);
 			}
 		}
