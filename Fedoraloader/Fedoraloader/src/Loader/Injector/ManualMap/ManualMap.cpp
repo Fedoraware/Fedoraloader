@@ -5,21 +5,24 @@
 #include <format>
 #include <stdexcept>
 
+#pragma warning(push)
+#pragma warning(disable: 28160)
+#pragma warning(disable: 6250)
+
 using TLoadLibraryA = decltype(LoadLibraryA);
 using TGetProcAddress = decltype(GetProcAddress);
 using TDllMain = BOOL(WINAPI*)(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
 
 enum class MapResult : short
 {
-	Unknown = 0,
-	Success = 1,
-	NoData = 2
+	Success = 0,
+	NoData = 1
 };
 
 struct ManualMapData
 {
 	BYTE* ImageBase;
-	MapResult Result = MapResult::Unknown;
+	MapResult Result = MapResult::Success;
 
 	TLoadLibraryA* FnLoadLibraryA;
 	TGetProcAddress* FnGetProcAddress;
@@ -176,6 +179,18 @@ DWORD GetSectionProtection(DWORD characteristics)
 	return protectionFlags[bExecute][bRead][bWrite];
 }
 
+void EraseMemory(HANDLE hTarget, LPVOID dest, SIZE_T size = 0)
+{
+	if (size == 0) { return; }
+
+	DWORD flOldProtect;
+	const std::unique_ptr<BYTE> nullBuffer(new BYTE[size]{});
+
+	WriteProcessMemory(hTarget, dest, nullBuffer.get(), size, nullptr);
+	VirtualProtectEx(hTarget, dest, size, PAGE_NOACCESS, &flOldProtect);
+	VirtualFreeEx(hTarget, dest, size, MEM_DECOMMIT);
+}
+
 bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 {
 	if (mainThread) { SuspendThread(mainThread); }
@@ -304,43 +319,10 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 		// Check the error code
 		if (resultData.Result == MapResult::NoData)
 		{
-			VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
-			VirtualFreeEx(hTarget, pMapData, 0, MEM_RELEASE);
 			VirtualFreeEx(hTarget, pLoader, 0, MEM_RELEASE);
+			VirtualFreeEx(hTarget, pMapData, 0, MEM_RELEASE);
+			VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
 			throw std::runtime_error("Manual map data was invalid");
-		}
-	}
-
-	const BYTE* nullBuffer = new BYTE[1024 * 1024 * 20]{};
-	if (nullBuffer == nullptr)
-	{
-		throw std::runtime_error("Failed to allocate null buffer");
-	}
-
-	// (Optional) Clear PE header
-	if (ERASE_PEH)
-	{
-		if (!WriteProcessMemory(hTarget, pTargetBase, nullBuffer, optHeader->SizeOfHeaders, nullptr))
-		{
-			std::printf("Failed to erase PE header\n");
-		}
-	}
-
-	// (Optional) Clear unneeded sections
-	if (CLEAR_SECTIONS)
-	{
-		pSectionHeader = IMAGE_FIRST_SECTION(ntHeaders);
-		for (UINT i = 0; i != fileHeader->NumberOfSections; ++i, ++pSectionHeader)
-		{
-			const DWORD discardable = pSectionHeader->Characteristics & IMAGE_SCN_MEM_DISCARDABLE;
-			if (pSectionHeader->Misc.VirtualSize && discardable)
-			{
-				const auto sectionName = reinterpret_cast<const char*>(pSectionHeader->Name);
-				if (!WriteProcessMemory(hTarget, pTargetBase + pSectionHeader->VirtualAddress, nullBuffer, pSectionHeader->Misc.VirtualSize, nullptr))
-				{
-					std::printf("Failed to discard section: %s\n", sectionName);
-				}
-			}
 		}
 	}
 
@@ -359,6 +341,7 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 				if (!VirtualFreeEx(hTarget, pTargetBase + pSectionHeader->VirtualAddress, pSectionHeader->Misc.VirtualSize, MEM_DECOMMIT))
 				{
 					std::printf("Failed to free NO_ACCESS section: %s", reinterpret_cast<char*>(pSectionHeader->Name));
+					DebugBreak();
 				}
 			}
 			else
@@ -367,16 +350,37 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 				if (!VirtualProtectEx(hTarget, pTargetBase + pSectionHeader->VirtualAddress, pSectionHeader->Misc.VirtualSize, flNewProtect, &flOldProtect))
 				{
 					std::printf("Failed to set %s to %lX\n", reinterpret_cast<char*>(pSectionHeader->Name), flNewProtect);
+					DebugBreak();
 				}
 			}
 		}
 	}
 
+	// (Optional) Clear unneeded sections
+	if (CLEAR_SECTIONS)
+	{
+		pSectionHeader = IMAGE_FIRST_SECTION(ntHeaders);
+		for (UINT i = 0; i != fileHeader->NumberOfSections; ++i, ++pSectionHeader)
+		{
+			const DWORD discardable = pSectionHeader->Characteristics & IMAGE_SCN_MEM_DISCARDABLE;
+			if (pSectionHeader->Misc.VirtualSize && discardable)
+			{
+				EraseMemory(hTarget, pTargetBase + pSectionHeader->VirtualAddress, pSectionHeader->Misc.VirtualSize);
+			}
+		}
+	}
+
+	// (Optional) Clear PE header
+	if (ERASE_PEH)
+	{
+		EraseMemory(hTarget, pTargetBase, optHeader->SizeOfHeaders);
+	}
+
 	// Cleanup
-	WriteProcessMemory(hTarget, pLoader, nullBuffer, loaderSize, nullptr);
 	VirtualFreeEx(hTarget, pLoader, 0, MEM_RELEASE);
 	VirtualFreeEx(hTarget, pMapData, 0, MEM_RELEASE);
-	delete[] nullBuffer;
 
 	return true;
 }
+
+#pragma warning(pop)
