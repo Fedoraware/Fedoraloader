@@ -35,6 +35,20 @@ constexpr bool ERASE_PEH = true;
 constexpr bool CLEAR_SECTIONS = true;
 constexpr bool ADJUST_PROTECTION = true;
 
+// [EXECUTE][READ][WRITE]
+constexpr int PROTECTION_FLAGS[2][2][2] = {
+	{
+		// Not executable
+		{ PAGE_NOACCESS, PAGE_WRITECOPY },
+		{ PAGE_READONLY, PAGE_READWRITE }
+	},
+	{
+		// Executable
+		{ PAGE_EXECUTE, PAGE_EXECUTE_WRITECOPY },
+		{ PAGE_EXECUTE_READ, PAGE_EXECUTE_READWRITE }
+	}
+};
+
 #pragma runtime_checks( "", off )
 void __stdcall LibraryLoader(ManualMapData* pData)
 {
@@ -154,40 +168,11 @@ DWORD __stdcall Stub() { return 0; }
 
 DWORD GetSectionProtection(DWORD characteristics)
 {
-	DWORD dwResult;
+	const bool execute = (characteristics & IMAGE_SCN_MEM_EXECUTE) != 0;
+	const bool read = (characteristics & IMAGE_SCN_MEM_READ) != 0;
+	const bool write = (characteristics & IMAGE_SCN_MEM_WRITE) != 0;
 
-    if(characteristics & IMAGE_SCN_MEM_EXECUTE) 
-    {
-        if(characteristics & IMAGE_SCN_MEM_WRITE)
-        {
-	        dwResult = PAGE_EXECUTE_READWRITE;
-        }
-        else if(characteristics & IMAGE_SCN_MEM_READ)
-        {
-	        dwResult = PAGE_EXECUTE_READ;
-        }
-        else
-        {
-	        dwResult = PAGE_EXECUTE;
-        }
-    } 
-    else
-    {
-        if(characteristics & IMAGE_SCN_MEM_WRITE)
-        {
-	        dwResult = PAGE_READWRITE;
-        }
-        else if(characteristics & IMAGE_SCN_MEM_READ)
-        {
-	        dwResult = PAGE_READONLY;
-        }
-        else
-        {
-	        dwResult = PAGE_NOACCESS;
-        }
-    }
-
-    return dwResult;
+	return PROTECTION_FLAGS[execute][read][write];
 }
 
 bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
@@ -369,7 +354,7 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 			const DWORD flNewProtect = GetSectionProtection(pSectionHeader->Characteristics);
 			if (flNewProtect == PAGE_NOACCESS)
 			{
-				// Free NO_ACCESS page
+				// Decommit NO_ACCESS pages
 				if (!VirtualFreeEx(hTarget, pTargetBase + pSectionHeader->VirtualAddress, pSectionHeader->Misc.VirtualSize, MEM_DECOMMIT))
 				{
 					std::printf("Failed to set %s to %lX\n", reinterpret_cast<char*>(pSectionHeader->Name), flNewProtect);
