@@ -33,148 +33,147 @@ constexpr bool ERASE_PEH = true;
 constexpr bool CLEAR_SECTIONS = true;
 constexpr bool ADJUST_PROTECTION = true;
 
-// [EXECUTE][READ][WRITE]
-constexpr int PROTECTION_FLAGS[2][2][2] = {
-	{
-		// Not executable
-		{ PAGE_NOACCESS, PAGE_WRITECOPY },
-		{ PAGE_READONLY, PAGE_READWRITE }
-	},
-	{
-		// Executable
-		{ PAGE_EXECUTE, PAGE_EXECUTE_WRITECOPY },
-		{ PAGE_EXECUTE_READ, PAGE_EXECUTE_READWRITE }
-	}
-};
-
 #pragma runtime_checks( "", off )
-void __stdcall LibraryLoader(ManualMapData* pData)
+namespace Shellcode
 {
-	if (!pData)
+	void __stdcall LibraryLoader(ManualMapData* pData)
 	{
-		pData->Result = MapResult::NoData;
-		return;
-	}
-
-	// Retrieve file headers
-	BYTE* pBase = pData->ImageBase;
-	const auto* dosHeader = reinterpret_cast<IMAGE_DOS_HEADER*>(pBase);
-	const auto* ntHeaders = reinterpret_cast<IMAGE_NT_HEADERS*>(pBase + dosHeader->e_lfanew);
-	const IMAGE_OPTIONAL_HEADER* optHeader = &ntHeaders->OptionalHeader;
-
-	// Retrieve our function pointers
-	const auto pLoadLibraryA = pData->FnLoadLibraryA;
-	const auto pGetProcAddress = pData->FnGetProcAddress;
-	const auto pRtlInsertInvertedFunctionTable = pData->FnIIFT;
-	const auto pDllMain = reinterpret_cast<TDllMain>(pBase + optHeader->AddressOfEntryPoint);
-
-	// Base address relocation
-	BYTE* locationDelta = pBase - optHeader->ImageBase;
-	if (locationDelta)
-	{
-		const auto relocData = optHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
-		if (relocData.Size)
+		if (!pData)
 		{
-			auto* pRelocData = reinterpret_cast<IMAGE_BASE_RELOCATION*>(pBase + relocData.VirtualAddress);
-			const auto* pRelocEnd = reinterpret_cast<IMAGE_BASE_RELOCATION*>(reinterpret_cast<uintptr_t>(pRelocData) + relocData.Size);
-			while (pRelocData < pRelocEnd && pRelocData->SizeOfBlock)
+			pData->Result = MapResult::NoData;
+			return;
+		}
+
+		// Retrieve file headers
+		BYTE* pBase = pData->ImageBase;
+		const auto* dosHeader = reinterpret_cast<IMAGE_DOS_HEADER*>(pBase);
+		const auto* ntHeaders = reinterpret_cast<IMAGE_NT_HEADERS*>(pBase + dosHeader->e_lfanew);
+		const IMAGE_OPTIONAL_HEADER* optHeader = &ntHeaders->OptionalHeader;
+
+		// Retrieve our function pointers
+		const auto pLoadLibraryA = pData->FnLoadLibraryA;
+		const auto pGetProcAddress = pData->FnGetProcAddress;
+		const auto pRtlInsertInvertedFunctionTable = pData->FnIIFT;
+		const auto pDllMain = reinterpret_cast<TDllMain>(pBase + optHeader->AddressOfEntryPoint);
+
+		// Base address relocation
+		BYTE* locationDelta = pBase - optHeader->ImageBase;
+		if (locationDelta)
+		{
+			const auto relocData = optHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
+			if (relocData.Size)
 			{
-				const UINT nEntries = (pRelocData->SizeOfBlock - sizeof(IMAGE_BASE_RELOCATION)) / sizeof(WORD);
-				auto pRelativeInfo = reinterpret_cast<WORD*>(pRelocData + 1);
-
-				for (UINT i = 0; i < nEntries; i++, pRelativeInfo++)
+				auto* pRelocData = reinterpret_cast<IMAGE_BASE_RELOCATION*>(pBase + relocData.VirtualAddress);
+				const auto* pRelocEnd = reinterpret_cast<IMAGE_BASE_RELOCATION*>(reinterpret_cast<uintptr_t>(pRelocData) + relocData.Size);
+				while (pRelocData < pRelocEnd && pRelocData->SizeOfBlock)
 				{
-					const int type = *pRelativeInfo >> 0xC;
-					const int offset = *pRelativeInfo & 0xFFF;
+					const UINT nEntries = (pRelocData->SizeOfBlock - sizeof(IMAGE_BASE_RELOCATION)) / sizeof(WORD);
+					auto pRelativeInfo = reinterpret_cast<WORD*>(pRelocData + 1);
 
-					if (type == IMAGE_REL_BASED_HIGHLOW)
+					for (UINT i = 0; i < nEntries; i++, pRelativeInfo++)
 					{
-						const auto pPatch = reinterpret_cast<UINT_PTR*>(pBase + pRelocData->VirtualAddress + offset);
-						*pPatch += reinterpret_cast<UINT_PTR>(locationDelta);
+						const int type = *pRelativeInfo >> 0xC;
+						const int offset = *pRelativeInfo & 0xFFF;
+
+						if (type == IMAGE_REL_BASED_HIGHLOW)
+						{
+							const auto pPatch = reinterpret_cast<UINT_PTR*>(pBase + pRelocData->VirtualAddress + offset);
+							*pPatch += reinterpret_cast<UINT_PTR>(locationDelta);
+						}
+					}
+
+					pRelocData = reinterpret_cast<IMAGE_BASE_RELOCATION*>(reinterpret_cast<BYTE*>(pRelocData) + pRelocData->SizeOfBlock);
+				}
+			}
+		}
+
+		// Resolve imports
+		const auto importData = optHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
+		if (importData.Size)
+		{
+			const auto* pImportDescr = reinterpret_cast<IMAGE_IMPORT_DESCRIPTOR*>(pBase + importData.VirtualAddress);
+			while (pImportDescr->Name)
+			{
+				const auto szMod = reinterpret_cast<char*>(pBase + pImportDescr->Name);
+				const HINSTANCE hDll = pLoadLibraryA(szMod);
+
+				auto pThunkRef = reinterpret_cast<ULONG_PTR*>(pBase + pImportDescr->OriginalFirstThunk);
+				auto pFuncRef = reinterpret_cast<ULONG_PTR*>(pBase + pImportDescr->FirstThunk);
+				if (!pThunkRef) { pThunkRef = pFuncRef; }
+
+				for (; *pThunkRef; pThunkRef++, pFuncRef++)
+				{
+					if (IMAGE_SNAP_BY_ORDINAL(*pThunkRef))
+					{
+						*pFuncRef = reinterpret_cast<ULONG_PTR>(pGetProcAddress(hDll, reinterpret_cast<char*>(*pThunkRef & 0xFFFF)));
+					}
+					else
+					{
+						const auto* pImport = reinterpret_cast<IMAGE_IMPORT_BY_NAME*>(pBase + (*pThunkRef));
+						*pFuncRef = reinterpret_cast<ULONG_PTR>(pGetProcAddress(hDll, pImport->Name));
 					}
 				}
-
-				pRelocData = reinterpret_cast<IMAGE_BASE_RELOCATION*>(reinterpret_cast<BYTE*>(pRelocData) + pRelocData->SizeOfBlock);
+				++pImportDescr;
 			}
 		}
-	}
 
-	// Resolve imports
-	const auto importData = optHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
-	if (importData.Size)
-	{
-		const auto* pImportDescr = reinterpret_cast<IMAGE_IMPORT_DESCRIPTOR*>(pBase + importData.VirtualAddress);
-		while (pImportDescr->Name)
+		// Handle TLS callbacks
+		if (HANDLE_TLS)
 		{
-			const auto szMod = reinterpret_cast<char*>(pBase + pImportDescr->Name);
-			const HINSTANCE hDll = pLoadLibraryA(szMod);
-
-			auto pThunkRef = reinterpret_cast<ULONG_PTR*>(pBase + pImportDescr->OriginalFirstThunk);
-			auto pFuncRef = reinterpret_cast<ULONG_PTR*>(pBase + pImportDescr->FirstThunk);
-
-			if (!pThunkRef)
+			const auto tlsData = optHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS];
+			if (tlsData.Size)
 			{
-				pThunkRef = pFuncRef;
-			}
+				const auto* pTLS = reinterpret_cast<IMAGE_TLS_DIRECTORY*>(pBase + tlsData.VirtualAddress);
+				const auto* pCallback = reinterpret_cast<PIMAGE_TLS_CALLBACK*>(pTLS->AddressOfCallBacks);
 
-			for (; *pThunkRef; ++pThunkRef, ++pFuncRef)
-			{
-				if (IMAGE_SNAP_BY_ORDINAL(*pThunkRef))
+				while (pCallback && *pCallback)
 				{
-					*pFuncRef = reinterpret_cast<ULONG_PTR>(pGetProcAddress(hDll, reinterpret_cast<char*>(*pThunkRef & 0xFFFF)));
-				}
-				else
-				{
-					const auto* pImport = reinterpret_cast<IMAGE_IMPORT_BY_NAME*>(pBase + (*pThunkRef));
-					*pFuncRef = reinterpret_cast<ULONG_PTR>(pGetProcAddress(hDll, pImport->Name));
+					(*pCallback)(pBase, DLL_PROCESS_ATTACH, nullptr);
+					pCallback++;
 				}
 			}
-			++pImportDescr;
 		}
-	}
 
-	// Handle TLS callbacks
-	if (HANDLE_TLS)
-	{
-		const auto tlsData = optHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS];
-		if (tlsData.Size)
+		// Exception support
+		if (ENABLE_EXCEPTIONS)
 		{
-			const auto* pTLS = reinterpret_cast<IMAGE_TLS_DIRECTORY*>(pBase + tlsData.VirtualAddress);
-			const auto* pCallback = reinterpret_cast<PIMAGE_TLS_CALLBACK*>(pTLS->AddressOfCallBacks);
-
-			while (pCallback && *pCallback)
+			if (pRtlInsertInvertedFunctionTable)
 			{
-				(*pCallback)(pBase, DLL_PROCESS_ATTACH, nullptr);
-				pCallback++;
+				pRtlInsertInvertedFunctionTable(pBase, optHeader->SizeOfImage);
 			}
 		}
+
+		// Invoke original entry point
+		pDllMain(reinterpret_cast<HINSTANCE>(pBase), DLL_PROCESS_ATTACH, nullptr);
+
+		pData->Result = MapResult::Success;
 	}
 
-	// Exception support
-	if (ENABLE_EXCEPTIONS)
-	{
-		if (pRtlInsertInvertedFunctionTable)
-		{
-			pRtlInsertInvertedFunctionTable(pBase, optHeader->SizeOfImage);
-		}
-	}
-
-	// Invoke original entry point
-	pDllMain(reinterpret_cast<HINSTANCE>(pBase), DLL_PROCESS_ATTACH, nullptr);
-
-	pData->Result = MapResult::Success;
+	DWORD __stdcall Stub() { return 0; }
 }
-
-DWORD __stdcall Stub() { return 0; }
 #pragma runtime_checks( "", restore )
 
 DWORD GetSectionProtection(DWORD characteristics)
 {
-	const bool execute = (characteristics & IMAGE_SCN_MEM_EXECUTE) != 0;
-	const bool read = (characteristics & IMAGE_SCN_MEM_READ) != 0;
-	const bool write = (characteristics & IMAGE_SCN_MEM_WRITE) != 0;
+	// [EXECUTE][READ][WRITE]
+	constexpr int protectionFlags[2][2][2] = {
+		{
+			// Not executable
+			{ PAGE_NOACCESS, PAGE_WRITECOPY },
+			{ PAGE_READONLY, PAGE_READWRITE }
+		},
+		{
+			// Executable
+			{ PAGE_EXECUTE, PAGE_EXECUTE_WRITECOPY },
+			{ PAGE_EXECUTE_READ, PAGE_EXECUTE_READWRITE }
+		}
+	};
 
-	return PROTECTION_FLAGS[execute][read][write];
+	const bool bExecute = (characteristics & IMAGE_SCN_MEM_EXECUTE) != 0;
+	const bool bRead = (characteristics & IMAGE_SCN_MEM_READ) != 0;
+	const bool bWrite = (characteristics & IMAGE_SCN_MEM_WRITE) != 0;
+
+	return protectionFlags[bExecute][bRead][bWrite];
 }
 
 bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
@@ -251,7 +250,7 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 	}
 
 	// Write library loader
-	const SIZE_T loaderSize = reinterpret_cast<DWORD>(Stub) - reinterpret_cast<DWORD>(LibraryLoader);
+	const SIZE_T loaderSize = reinterpret_cast<DWORD>(Shellcode::Stub) - reinterpret_cast<DWORD>(Shellcode::LibraryLoader);
 	const LPVOID pLoader = VirtualAllocEx(hTarget, nullptr, loaderSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 	if (!pLoader)
 	{
@@ -260,7 +259,7 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 		throw std::runtime_error("Failed to allocate library loader memory");
 	}
 
-	if (!WriteProcessMemory(hTarget, pLoader, &LibraryLoader, loaderSize, nullptr))
+	if (!WriteProcessMemory(hTarget, pLoader, &Shellcode::LibraryLoader, loaderSize, nullptr))
 	{
 		VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
 		VirtualFreeEx(hTarget, pMapData, 0, MEM_RELEASE);
@@ -359,7 +358,7 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 				// Decommit NO_ACCESS pages
 				if (!VirtualFreeEx(hTarget, pTargetBase + pSectionHeader->VirtualAddress, pSectionHeader->Misc.VirtualSize, MEM_DECOMMIT))
 				{
-					std::printf("Failed to set %s to %lX\n", reinterpret_cast<char*>(pSectionHeader->Name), flNewProtect);
+					std::printf("Failed to free NO_ACCESS section: %s", reinterpret_cast<char*>(pSectionHeader->Name));
 				}
 			}
 			else
