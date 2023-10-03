@@ -259,8 +259,8 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 
 	if (!WriteProcessMemory(hTarget, pMapData, &mapData, sizeof(ManualMapData), nullptr))
 	{
-		VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
 		VirtualFreeEx(hTarget, pMapData, 0, MEM_RELEASE);
+		VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
 		throw std::runtime_error("Failed to write mapping data to target");
 	}
 
@@ -269,16 +269,16 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 	const LPVOID pLoader = VirtualAllocEx(hTarget, nullptr, loaderSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 	if (!pLoader)
 	{
-		VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
 		VirtualFreeEx(hTarget, pMapData, 0, MEM_RELEASE);
+		VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
 		throw std::runtime_error("Failed to allocate library loader memory");
 	}
 
 	if (!WriteProcessMemory(hTarget, pLoader, &Shellcode::LibraryLoader, loaderSize, nullptr))
 	{
-		VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
-		VirtualFreeEx(hTarget, pMapData, 0, MEM_RELEASE);
 		VirtualFreeEx(hTarget, pLoader, 0, MEM_RELEASE);
+		VirtualFreeEx(hTarget, pMapData, 0, MEM_RELEASE);
+		VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
 		throw std::runtime_error("Failed to write library loader to target");
 	}
 
@@ -286,9 +286,9 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 	const HANDLE hThread = CreateRemoteThread(hTarget, nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(pLoader), pMapData, 0, nullptr);
 	if (!hThread)
 	{
-		VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
-		VirtualFreeEx(hTarget, pMapData, 0, MEM_RELEASE);
 		VirtualFreeEx(hTarget, pLoader, 0, MEM_RELEASE);
+		VirtualFreeEx(hTarget, pMapData, 0, MEM_RELEASE);
+		VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
 		throw std::runtime_error("Failed to create the remote thread");
 	}
 
