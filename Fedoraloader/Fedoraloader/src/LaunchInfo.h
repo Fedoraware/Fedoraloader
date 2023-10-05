@@ -1,4 +1,6 @@
 #pragma once
+#include <string>
+
 #include "Windows.h"
 
 struct LaunchInfo
@@ -7,6 +9,6 @@ struct LaunchInfo
     bool NoBypass = false;
     bool Debug = false;
 
-    LPCWSTR File = nullptr;
-    LPCWSTR URL = nullptr;
+    std::wstring File;
+    std::wstring URL;
 };

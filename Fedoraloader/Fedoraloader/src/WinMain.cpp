@@ -6,7 +6,7 @@
 #include <stdexcept>
 
 #define CHECK_ARG(szArg, bOut) if (wcscmp(arg, L##szArg) == 0) { (bOut) = true; continue; }
-#define CHECK_ARG_STR(szArg, szOut) if (wcscmp(arg, L##szArg) == 0 && i < nArgs - 1) { i++; const auto nextArg = szArglist[i]; (szOut) = Utils::CopyString(nextArg); continue; }
+#define CHECK_ARG_STR(szArg, szOut) if (wcscmp(arg, L##szArg) == 0 && i < nArgs - 1) { i++; const auto nextArg = szArglist[i]; (szOut) = std::wstring(nextArg); continue; }
 
 LaunchInfo GetLaunchInfo()
 {

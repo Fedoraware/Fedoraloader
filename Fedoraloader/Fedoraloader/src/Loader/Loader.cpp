@@ -10,7 +10,7 @@
 #include <stdexcept>
 
 constexpr WORD ZIP_SIGNATURE = 0x4B50;
-LPCWSTR ACTION_URL = L"https://nightly.link/Fedoraware/Fedoraware/workflows/msbuild/main/Fedoraware.zip";
+const std::wstring ACTION_URL = L"https://nightly.link/Fedoraware/Fedoraware/workflows/msbuild/main/Fedoraware.zip";
 
 // Retrieves the Fware binary from web/disk
 Binary GetBinary(const LaunchInfo& launchInfo)
@@ -18,14 +18,14 @@ Binary GetBinary(const LaunchInfo& launchInfo)
 	Binary binary;
 
 	// Read the file from web/disk
-	if (launchInfo.File)
+	if (!launchInfo.File.empty())
 	{
-		binary = Utils::ReadBinaryFile(launchInfo.File);
+		binary = Utils::ReadBinaryFile(launchInfo.File.c_str());
 	}
 	else
 	{
-		const LPCWSTR url = launchInfo.URL ? launchInfo.URL : ACTION_URL;
-		binary = Web::DownloadFile(url);
+		const auto& url = launchInfo.URL.empty() ? ACTION_URL : launchInfo.URL;
+		binary = Web::DownloadFile(url.c_str());
 	}
 
 	// Check if the file is packed
@@ -71,7 +71,7 @@ bool Loader::Load(const LaunchInfo& launchInfo)
 
 bool Loader::Debug(const LaunchInfo& launchInfo)
 {
-	if (!launchInfo.File)
+	if (launchInfo.File.empty())
 	{
 		throw std::runtime_error("LoadLibrary required a file path");
 	}
@@ -84,5 +84,5 @@ bool Loader::Debug(const LaunchInfo& launchInfo)
 	}
 
 	// Inject the binary
-	return LL::Inject(hGame, launchInfo.File);
+	return LL::Inject(hGame, launchInfo.File.c_str());
 }
