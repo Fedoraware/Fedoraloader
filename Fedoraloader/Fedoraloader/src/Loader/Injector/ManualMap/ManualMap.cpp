@@ -196,16 +196,16 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 	if (mainThread) { SuspendThread(mainThread); }
 
 	DWORD flOldProtect = 0;
-	BYTE* pSrcData = binary.Data;
+	const BYTE* pSrcData = binary.data();
 
 	// Retrieve the file headers
-	const auto* dosHeader = reinterpret_cast<IMAGE_DOS_HEADER*>(pSrcData);
+	const auto dosHeader = reinterpret_cast<const IMAGE_DOS_HEADER*>(pSrcData);
 	if (dosHeader->e_magic != IMAGE_DOS_SIGNATURE)
 	{
 		throw std::invalid_argument("The file is not a valid PE");
 	}
 
-	const auto* ntHeaders = reinterpret_cast<IMAGE_NT_HEADERS*>(pSrcData + dosHeader->e_lfanew);
+	const auto ntHeaders = reinterpret_cast<const IMAGE_NT_HEADERS*>(pSrcData + dosHeader->e_lfanew);
 	const IMAGE_FILE_HEADER* fileHeader = &ntHeaders->FileHeader;
 	const IMAGE_OPTIONAL_HEADER* optHeader = &ntHeaders->OptionalHeader;
 

@@ -142,23 +142,15 @@ Binary Utils::ReadBinaryFile(LPCWSTR fileName)
 	}
 
 	// Allocate a buffer
-	const auto fileSize = inFile.tellg();
-	const auto data = static_cast<BYTE*>(std::malloc(static_cast<size_t>(fileSize) * sizeof(BYTE)));
-	if (!data)
-	{
-		inFile.close();
-		throw std::runtime_error("Failed to allocate file buffer");
-	}
+	const auto fileSize = static_cast<size_t>(inFile.tellg());
+	Binary fileData(fileSize);
 
 	// Read the file
 	inFile.seekg(0, std::ios::beg);
-	inFile.read(reinterpret_cast<char*>(data), fileSize);
+	inFile.read(reinterpret_cast<char*>(fileData.data()), fileSize);
 	inFile.close();
 
-	return {
-		.Data = data,
-		.Size = static_cast<SIZE_T>(fileSize)
-	};
+	return fileData;
 }
 
 Binary Utils::GetBinaryResource(WORD id)
@@ -177,10 +169,7 @@ Binary Utils::GetBinaryResource(WORD id)
 	}
 
 	const auto binData = static_cast<BYTE*>(LockResource(resData));
-	return {
-		.Data = binData,
-		.Size = resSize
-	};
+	return std::vector(binData, binData + resSize);
 }
 
 bool Utils::IsElevated()

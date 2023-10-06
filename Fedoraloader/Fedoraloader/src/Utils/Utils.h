@@ -1,12 +1,8 @@
 #pragma once
-#include <string>
 #include "Windows.h"
+#include <vector>
 
-struct Binary
-{
-	BYTE* Data = nullptr;
-	SIZE_T Size = 0u;
-};
+using Binary = std::vector<BYTE>;
 
 namespace Utils
 {

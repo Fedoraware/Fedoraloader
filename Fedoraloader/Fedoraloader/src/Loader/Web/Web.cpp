@@ -1,6 +1,5 @@
 #include "Web.h"
 #include <wininet.h>
-#include <cstdlib>
 #include <iostream>
 
 Binary Web::DownloadFile(LPCWSTR url)
@@ -19,8 +18,7 @@ Binary Web::DownloadFile(LPCWSTR url)
 		throw std::system_error(GetLastError(), std::system_category(), "Failed to open URL");
 	}
 
-	BYTE* fileData = nullptr;
-	size_t fileSize = 0;
+	Binary fileData = {};
 
 	BYTE buffer[4096];
 	DWORD bytesRead = 0;
@@ -29,29 +27,13 @@ Binary Web::DownloadFile(LPCWSTR url)
 		// Did we read all bytes?
 		if (bytesRead == 0) { break; }
 
-		// Allocate more memory
-		const auto reFileData = static_cast<BYTE*>(std::realloc(fileData, fileSize + bytesRead));
-		if (!reFileData)
-		{
-			std::free(fileData);
-			InternetCloseHandle(hConnect);
-			InternetCloseHandle(hInternet);
-			throw std::runtime_error("Failed to reallocate download buffer");
-		}
-
 		// Copy the buffer
-		fileData = reFileData;
-		std::memcpy(&fileData[fileSize], buffer, bytesRead);
-
-		fileSize += bytesRead;
+		fileData.insert(fileData.end(), buffer, buffer + bytesRead);
 	}
 
 	// Cleanup
 	InternetCloseHandle(hConnect);
 	InternetCloseHandle(hInternet);
 
-	return {
-		.Data = fileData,
-		.Size = fileSize
-	};
+	return fileData;
 }

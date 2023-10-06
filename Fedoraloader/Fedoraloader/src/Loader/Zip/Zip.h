@@ -3,5 +3,5 @@
 
 namespace Zip
 {
-	void UnpackFile(Binary& file);
+	Binary UnpackFile(const Binary& file);
 }

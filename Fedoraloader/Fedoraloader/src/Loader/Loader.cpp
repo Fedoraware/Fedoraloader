@@ -29,10 +29,10 @@ Binary GetBinary(const LaunchInfo& launchInfo)
 	}
 
 	// Check if the file is packed
-	const auto* dosHeader = reinterpret_cast<IMAGE_DOS_HEADER*>(binary.Data);
+	const auto dosHeader = reinterpret_cast<IMAGE_DOS_HEADER*>(binary.data());
 	if (dosHeader->e_magic == ZIP_SIGNATURE)
 	{
-		Zip::UnpackFile(binary);
+		binary = Zip::UnpackFile(binary);
 	}
 
 	return binary;
@@ -43,7 +43,7 @@ bool Loader::Load(const LaunchInfo& launchInfo)
 {
 	// Retrieve the binary
 	const Binary binary = GetBinary(launchInfo);
-	if (!binary.Data || binary.Size < 0x1000)
+	if (binary.empty() || binary.size() < 0x1000)
 	{
 		throw std::runtime_error("Invalid binary file");
 	}
@@ -62,11 +62,7 @@ bool Loader::Load(const LaunchInfo& launchInfo)
 	}
 
 	// Inject the binary
-	const bool result = MM::Inject(hGame, binary);
-
-	// Cleanup
-	std::free(binary.Data);
-	return result;
+	return MM::Inject(hGame, binary);
 }
 
 bool Loader::Debug(const LaunchInfo& launchInfo)

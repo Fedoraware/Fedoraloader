@@ -26,12 +26,12 @@ bool FindBySuffix(mz_zip_archive& archive, LPCSTR suffix, mz_uint& outIndex)
 	return false;
 }
 
-void Zip::UnpackFile(Binary& file)
+Binary Zip::UnpackFile(const Binary& file)
 {
 	mz_zip_archive zipArchive{};
 
 	// Init zip reader
-	if (!mz_zip_reader_init_mem(&zipArchive, file.Data, file.Size, 0))
+	if (!mz_zip_reader_init_mem(&zipArchive, file.data(), file.size(), 0))
 	{
 		throw std::runtime_error("Failed to initialize zip reader");
 	}
@@ -45,7 +45,7 @@ void Zip::UnpackFile(Binary& file)
 
 	// Extract the dll file
 	size_t bufferSize;
-	void* buffer = mz_zip_reader_extract_to_heap(&zipArchive, fileIndex, &bufferSize, 0);
+	BYTE* buffer = static_cast<BYTE*>(mz_zip_reader_extract_to_heap(&zipArchive, fileIndex, &bufferSize, 0));
 	if (!buffer)
 	{
 		mz_zip_reader_end(&zipArchive);
@@ -54,9 +54,7 @@ void Zip::UnpackFile(Binary& file)
 
 	// Cleanup
 	mz_zip_reader_end(&zipArchive);
-	std::free(file.Data);
 
 	// Update the file
-	file.Data = static_cast<BYTE*>(buffer);
-	file.Size = bufferSize;
+	return std::vector(buffer, buffer + bufferSize);
 }
