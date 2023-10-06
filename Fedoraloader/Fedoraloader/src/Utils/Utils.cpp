@@ -1,5 +1,4 @@
 #include "Utils.h"
-#include "../resource.h"
 
 #include <fstream>
 #include <TlHelp32.h>
@@ -132,7 +131,7 @@ bool Utils::WaitForModule(DWORD processId, LPCSTR moduleName, DWORD sTimeout)
 	return moduleFound;
 }
 
-Binary Utils::ReadBinaryFile(LPCWSTR fileName)
+Binary Utils::ReadBinaryFile(const std::wstring& fileName)
 {
 	std::ifstream inFile(fileName, std::ios::binary | std::ios::ate);
 	if (inFile.fail())
@@ -169,7 +168,7 @@ Binary Utils::GetBinaryResource(WORD id)
 	}
 
 	const auto binData = static_cast<BYTE*>(LockResource(resData));
-	return std::vector(binData, binData + resSize);
+	return {binData, binData + resSize};
 }
 
 bool Utils::IsElevated()

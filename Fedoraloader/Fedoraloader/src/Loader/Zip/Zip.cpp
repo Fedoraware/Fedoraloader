@@ -56,5 +56,5 @@ Binary Zip::UnpackFile(const Binary& file)
 	mz_zip_reader_end(&zipArchive);
 
 	// Update the file
-	return std::vector(buffer, buffer + bufferSize);
+	return {buffer, buffer + bufferSize};
 }

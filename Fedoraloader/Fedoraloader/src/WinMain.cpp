@@ -12,7 +12,7 @@ LaunchInfo GetLaunchInfo()
 {
     int nArgs;
     LaunchInfo info{};
-    LPWSTR* szArglist  =  CommandLineToArgvW(GetCommandLineW(), &nArgs);
+    LPWSTR* szArglist = CommandLineToArgvW(GetCommandLineW(), &nArgs);
     if (!szArglist) { return info; }
 	
     for (int i = 0; i < nArgs; i++)

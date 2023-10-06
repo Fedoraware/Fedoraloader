@@ -20,12 +20,12 @@ Binary GetBinary(const LaunchInfo& launchInfo)
 	// Read the file from web/disk
 	if (!launchInfo.File.empty())
 	{
-		binary = Utils::ReadBinaryFile(launchInfo.File.c_str());
+		binary = Utils::ReadBinaryFile(launchInfo.File);
 	}
 	else
 	{
 		const auto& url = launchInfo.URL.empty() ? ACTION_URL : launchInfo.URL;
-		binary = Web::DownloadFile(url.c_str());
+		binary = Web::DownloadFile(url);
 	}
 
 	// Check if the file is packed

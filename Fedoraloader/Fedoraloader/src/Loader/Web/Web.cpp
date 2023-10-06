@@ -2,7 +2,7 @@
 #include <wininet.h>
 #include <iostream>
 
-Binary Web::DownloadFile(LPCWSTR url)
+Binary Web::DownloadFile(const std::wstring& url)
 {
 	// Init WinINet
 	const HINTERNET hInternet = InternetOpenA("HTTP Request", INTERNET_OPEN_TYPE_DIRECT, nullptr, nullptr, 0);
@@ -12,7 +12,7 @@ Binary Web::DownloadFile(LPCWSTR url)
 	}
 
 	// Open the connection
-	const HINTERNET hConnect = InternetOpenUrlW(hInternet, url, nullptr, 0, INTERNET_FLAG_RELOAD, 0);
+	const HINTERNET hConnect = InternetOpenUrlW(hInternet, url.c_str(), nullptr, 0, INTERNET_FLAG_RELOAD, 0);
 	if (!hConnect)
 	{
 		throw std::system_error(GetLastError(), std::system_category(), "Failed to open URL");

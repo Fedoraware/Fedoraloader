@@ -1,5 +1,7 @@
 #pragma once
 #include "Windows.h"
+
+#include <string>
 #include <vector>
 
 using Binary = std::vector<BYTE>;
@@ -17,7 +19,7 @@ namespace Utils
 	bool WaitForModule(DWORD processId, LPCSTR moduleName, DWORD sTimeout = 10);
 
 	// Binary utils
-	Binary ReadBinaryFile(LPCWSTR fileName);
+	Binary ReadBinaryFile(const std::wstring& fileName);
 	Binary GetBinaryResource(WORD id);
 
 	// STL & WinApi utils

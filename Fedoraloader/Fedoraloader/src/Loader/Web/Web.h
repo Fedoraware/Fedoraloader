@@ -3,5 +3,5 @@
 
 namespace Web
 {
-	 Binary DownloadFile(LPCWSTR url);
+	 Binary DownloadFile(const std::wstring& url);
 }
