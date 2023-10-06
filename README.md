@@ -1,6 +1,6 @@
 # Fedoraloader v2
 
-[![](https://img.shields.io/badge/Download-Latest-blue?style=for-the-badge&logo=github)](https://github.com/Fedoraware/Fedoraloader/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/Fedoraware/Fedoraloader/total?style=for-the-badge&logo=github&color=blue)](https://github.com/Fedoraware/Fedoraloader/releases/latest)
 
 Fedoraloader is an easy-to-use loader for the free and open-source cheat [Fedoraware](https://github.com/Fedoraware/Fedoraware).
 It automatically downloads and injects the latest Fedoraware build into your game.
