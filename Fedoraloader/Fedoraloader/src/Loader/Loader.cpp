@@ -38,6 +38,18 @@ Binary GetBinary(const LaunchInfo& launchInfo)
 	return binary;
 }
 
+void Loader::Run(const LaunchInfo& launchInfo)
+{
+	if (launchInfo.Debug)
+	{
+		Debug(launchInfo);
+	}
+	else
+	{
+		Load(launchInfo);
+	}
+}
+
 // Loads and injects Fware
 bool Loader::Load(const LaunchInfo& launchInfo)
 {

@@ -6,7 +6,7 @@
 #include <stdexcept>
 
 #define CHECK_ARG(szArg, bOut) if (wcscmp(arg, L##szArg) == 0) { (bOut) = true; continue; }
-#define CHECK_ARG_STR(szArg, szOut) if (wcscmp(arg, L##szArg) == 0 && i < nArgs - 1) { i++; const auto nextArg = szArglist[i]; (szOut) = std::wstring(nextArg); continue; }
+#define CHECK_ARG_STR(szArg, szOut) if (wcscmp(arg, L##szArg) == 0 && i < nArgs - 1) { const auto nextArg = szArglist[++i]; (szOut) = std::wstring(nextArg); continue; }
 
 LaunchInfo GetLaunchInfo()
 {
@@ -37,19 +37,15 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     if (!Utils::IsElevated())
     {
-        MessageBoxA(nullptr, "Please run Fedoraloader as administrator!", "Missing elevation", MB_OK | MB_ICONWARNING);
+        MessageBoxA(nullptr, "Please restart Fedoraloader as administrator!", "Missing elevation", MB_OK | MB_ICONWARNING);
 	    return 0;
     }
 
     try
     {
-    	if (launchInfo.Debug)
+    	if (launchInfo.Silent)
 	    {
-		    Loader::Debug(launchInfo);
-	    }
-		else if (launchInfo.Silent)
-	    {
-			Loader::Load(launchInfo);
+			Loader::Run(launchInfo);
 	    }
 	    else
 	    {

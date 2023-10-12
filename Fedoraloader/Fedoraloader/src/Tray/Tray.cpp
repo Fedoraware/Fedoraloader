@@ -178,7 +178,7 @@ void LoadSafe(const LaunchInfo& launchInfo)
 
 	try
 	{
-		Loader::Load(launchInfo);
+		Loader::Run(launchInfo);
 	}
 	catch (const std::exception& ex)
 	{
