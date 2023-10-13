@@ -20,11 +20,14 @@ Binary GetBinary(const LaunchInfo& launchInfo)
 	// Read the file from web/disk
 	if (!launchInfo.File.empty())
 	{
+		Log::Info(L"Reading file: {}", launchInfo.File);
 		binary = Utils::ReadBinaryFile(launchInfo.File);
 	}
 	else
 	{
 		const auto& url = launchInfo.URL.empty() ? ACTION_URL : launchInfo.URL;
+		Log::Info(L"Downloading file: {}", url);
+
 		binary = Web::DownloadFile(url);
 	}
 
@@ -32,6 +35,7 @@ Binary GetBinary(const LaunchInfo& launchInfo)
 	const auto dosHeader = reinterpret_cast<IMAGE_DOS_HEADER*>(binary.data());
 	if (dosHeader->e_magic == ZIP_SIGNATURE)
 	{
+		Log::Info("Zip file detected! Unpaking...");
 		binary = Zip::UnpackFile(binary);
 	}
 
@@ -75,6 +79,7 @@ bool Loader::Load(const LaunchInfo& launchInfo)
 	}
 
 	// Inject the binary
+	Log::Info("Manual mapping {:d} bytes...", binary.size());
 	return MM::Inject(hGame, binary);
 }
 
@@ -94,5 +99,6 @@ bool Loader::Debug(const LaunchInfo& launchInfo)
 	}
 
 	// Inject the binary
+	Log::Info(L"Running LoadLibrary with file {}", launchInfo.File);
 	return LL::Inject(hGame, launchInfo.File.c_str());
 }

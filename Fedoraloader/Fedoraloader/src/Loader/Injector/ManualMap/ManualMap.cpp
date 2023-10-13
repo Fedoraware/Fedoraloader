@@ -246,6 +246,8 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 		throw std::runtime_error("Failed to write PE header to target");
 	}
 
+	Log::Debug("PE header @ {:p}", static_cast<void*>(pTargetBase));
+
 	// Write sections
 	auto pSectionHeader = IMAGE_FIRST_SECTION(ntHeaders);
 	for (UINT i = 0; i < fileHeader->NumberOfSections; i++, pSectionHeader++)
@@ -277,6 +279,8 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 		throw std::runtime_error("Failed to write mapping data to target");
 	}
 
+	Log::Debug("Manual Map Data @ {:p}", static_cast<void*>(pMapData));
+
 	// Write library loader
 	const SIZE_T loaderSize = reinterpret_cast<DWORD>(Shellcode::Stub) - reinterpret_cast<DWORD>(Shellcode::LibraryLoader);
 	const LPVOID pLoader = VirtualAllocEx(hTarget, nullptr, loaderSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
@@ -294,6 +298,8 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 		VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
 		throw std::runtime_error("Failed to write library loader to target");
 	}
+
+	Log::Debug("Library Loader @ {:p}", static_cast<void*>(pLoader));
 
 	// Run the library loader
 	const HANDLE hThread = CreateRemoteThread(hTarget, nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(pLoader), pMapData, 0, nullptr);

@@ -21,18 +21,19 @@ PBYTE InitRtlInsertInvertedFunctionTable()
 	{
 		if (const PBYTE result = Pattern::Find("ntdll.dll", pattern))
 		{
+			Log::Debug("RtlInsertInvertedFunctionTable @ {:p}", static_cast<void*>(result));
 			return result;
 		}
 	}
 
-#ifdef _DEBUG
+	// Windows version not supported
 	{
 		DWORD major, minor, buildNubmer;
 		Utils::GetVersionNumbers(&major, &minor, &buildNubmer);
-		const auto msg = std::format("Windows version not supported: {:d}.{:d}.{:d}\nPlease report this incident.", major, minor, buildNubmer);
-		MessageBoxA(nullptr, msg.c_str(), "Warning", MB_OK | MB_ICONWARNING);
+		Log::Warn("Failed to retrieve RtlInsertInvertedFunctionTable");
+		Log::Warn("Windows version: {:d}.{:d}.{:d}", major, minor, buildNubmer);
+		DebugBreak();
 	}
-#endif
 
 	return nullptr;
 }

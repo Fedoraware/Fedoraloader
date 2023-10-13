@@ -43,7 +43,6 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     {
 	    Utils::ShowConsole();
         Log::SetLevel(LogLevel::Debug);
-		Log::Debug("Debug mode enabled. Str: {} Int: {:d} Float: {:.2f}", "Okay", 16, 2.141f);
     }
 
     // Check privileges
