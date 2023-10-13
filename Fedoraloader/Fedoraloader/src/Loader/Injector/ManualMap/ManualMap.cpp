@@ -230,14 +230,6 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 	}
 
 	VirtualProtectEx(hTarget, pTargetBase, optHeader->SizeOfImage, PAGE_EXECUTE_READWRITE, &flOldProtect);
-
-	// Init manual map data
-	const ManualMapData mapData{
-		.ImageBase = pTargetBase,
-		.FnLoadLibraryA = LoadLibraryA,
-		.FnGetProcAddress = GetProcAddress,
-		.FnIIFT = Native::GetRtlInsertInvertedFunctionTable()
-	};
 	
 	// Write file header
 	if (!WriteProcessMemory(hTarget, pTargetBase, pSrcData, optHeader->SizeOfHeaders, nullptr))
@@ -247,6 +239,14 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 	}
 
 	Log::Debug("PE header @ {:p}", static_cast<void*>(pTargetBase));
+
+	// Init manual map data
+	const ManualMapData mapData{
+		.ImageBase = pTargetBase,
+		.FnLoadLibraryA = LoadLibraryA,
+		.FnGetProcAddress = GetProcAddress,
+		.FnIIFT = Native::GetRtlInsertInvertedFunctionTable()
+	};
 
 	// Write sections
 	auto pSectionHeader = IMAGE_FIRST_SECTION(ntHeaders);

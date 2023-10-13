@@ -3,6 +3,7 @@
 #include "Loader/Loader.h"
 #include "Utils/Utils.h"
 
+#include <VersionHelpers.h>
 #include <stdexcept>
 
 #define CHECK_ARG(szArg, bOut) if (wcscmp(arg, L##szArg) == 0) { (bOut) = true; continue; }
@@ -37,6 +38,12 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 	Log::SetLevel(LogLevel::Info);
 
 	LaunchInfo launchInfo = GetLaunchInfo();
+
+    // Apparently people are still using Windows 7 in 2023...
+    if (!IsWindows8OrGreater())
+    {
+	    MessageBoxA(nullptr, "Your Windows version is outdated and will most likely not work!", "Outdated OS", MB_OK | MB_ICONWARNING);
+    }
 
 	// Show debug console
     if (launchInfo.Debug)
