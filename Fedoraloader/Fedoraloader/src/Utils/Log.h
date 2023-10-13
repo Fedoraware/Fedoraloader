@@ -18,7 +18,7 @@ class Log
 	template<typename... Args>
 	static void LogPrefix(const std::string& prefix, std::format_string<Args...> fmt, Args&&... args)
 	{
-		std::cout << "[" << prefix << "] " << std::format(fmt, args...) << std::endl;
+		std::cout << "[" << prefix << "] " << std::format(fmt, std::forward<Args>(args)...) << std::endl;
 	}
 
 public:
@@ -28,30 +28,30 @@ public:
 	}
 
 	template<typename... Args>
-	static void Debug(std::format_string<Args...> fmt, Args&&... args)
+	static void Debug(const std::format_string<Args...> fmt, Args&&... args)
 	{
 		if (Level > LogLevel::Debug) { return; }
-		LogPrefix("Debug", fmt, args...);
+		LogPrefix("Debug", fmt, std::forward<Args>(args)...);
 	}
 
 	template<typename... Args>
-	static void Info(std::format_string<Args...> fmt, Args&&... args)
+	static void Info(const std::format_string<Args...> fmt, Args&&... args)
 	{
 		if (Level > LogLevel::Info) { return; }
-		LogPrefix("Info", fmt, args...);
+		LogPrefix("Info", fmt, std::forward<Args>(args)...);
 	}
 
 	template<typename... Args>
-	static void Warn(std::format_string<Args...> fmt, Args&&... args)
+	static void Warn(const std::format_string<Args...> fmt, Args&&... args)
 	{
 		if (Level > LogLevel::Warn) { return; }
-		LogPrefix("Warn", fmt, args...);
+		LogPrefix("Warn", fmt, std::forward<Args>(args)...);
 	}
 
 	template<typename... Args>
-	static void Error(std::format_string<Args...> fmt, Args&&... args)
+	static void Error(const std::format_string<Args...> fmt, Args&&... args)
 	{
 		if (Level > LogLevel::Error) { return; }
-		LogPrefix("Error", fmt, args...);
+		LogPrefix("Error", fmt, std::forward<Args>(args)...);
 	}
 };

@@ -324,6 +324,8 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 			VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
 			throw std::runtime_error("Manual map data was invalid");
 		}
+
+		Log::Info("LibraryLoader result was: {:d}", static_cast<int>(resultData.Result));
 	}
 
 	// (Optional) Adjust the section protection
