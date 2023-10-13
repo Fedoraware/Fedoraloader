@@ -1,6 +1,6 @@
 #pragma once
 #include <Windows.h>
-#include "Logger/Logger.h"
+#include "Log.h"
 
 #include <string>
 #include <vector>
