@@ -36,10 +36,18 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 {
 	LaunchInfo launchInfo = GetLaunchInfo();
 
+    // Check privileges
     if (!Utils::IsElevated())
     {
         MessageBoxA(nullptr, "Please restart Fedoraloader as administrator!", "Missing elevation", MB_OK | MB_ICONWARNING);
 	    return 0;
+    }
+
+    // Show debug console
+    if (launchInfo.Debug)
+    {
+	    Utils::ShowConsole();
+        Log::Info("Debug console enabled");
     }
 
     try
@@ -63,6 +71,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         // Unexpected errors
 	    MessageBoxA(nullptr, "An unexpected error occured!", "Error", MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
     }
+
+    // Hide debug console
+    if (launchInfo.Debug) { Utils::ShowConsole(); }
 
     return 0;
 }

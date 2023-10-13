@@ -100,6 +100,7 @@
     <ClCompile Include="src\Loader\Web\Web.cpp" />
     <ClCompile Include="src\Loader\Zip\Zip.cpp" />
     <ClCompile Include="src\Tray\Tray.cpp" />
+    <ClCompile Include="src\Utils\Logger\Logger.cpp" />
     <ClCompile Include="src\Utils\Pattern\Pattern.cpp" />
     <ClCompile Include="src\Utils\Utils.cpp" />
     <ClCompile Include="src\WinMain.cpp" />
@@ -116,6 +117,7 @@
     <ClInclude Include="src\Loader\Web\Web.h" />
     <ClInclude Include="src\Loader\Zip\Zip.h" />
     <ClInclude Include="src\Tray\Tray.h" />
+    <ClInclude Include="src\Utils\Logger\Logger.h" />
     <ClInclude Include="src\Utils\Pattern\Pattern.h" />
     <ClInclude Include="src\Utils\Utils.h" />
   </ItemGroup>

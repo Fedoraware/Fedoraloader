@@ -1,5 +1,6 @@
 #include "Utils.h"
 
+#include <assert.h>
 #include <fstream>
 #include <TlHelp32.h>
 
@@ -218,4 +219,21 @@ void Utils::GetVersionNumbers(LPDWORD major, LPDWORD minor, LPDWORD build)
 
 	fn(major, minor, build);
 	*build &= ~0xF0000000;
+}
+
+void Utils::ShowConsole()
+{
+	AllocConsole();
+	FILE* fDummy;
+	assert(freopen_s(&fDummy, "CONIN$", "r", stdin) == 0);
+	assert(freopen_s(&fDummy, "CONOUT$", "w", stderr) == 0);
+	assert(freopen_s(&fDummy, "CONOUT$", "w", stdout) == 0);
+}
+
+void Utils::HideConsole()
+{
+	assert(std::fclose(stdin) == 0);
+	assert(std::fclose(stderr) == 0);
+	assert(std::fclose(stdout) == 0);
+	FreeConsole();
 }

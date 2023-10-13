@@ -1,5 +1,6 @@
 #pragma once
-#include "Windows.h"
+#include <Windows.h>
+#include "Logger/Logger.h"
 
 #include <string>
 #include <vector>
@@ -26,4 +27,7 @@ namespace Utils
 	bool IsElevated();
 	LPCWSTR CopyString(LPCWSTR src);
 	void GetVersionNumbers(LPDWORD major, LPDWORD minor, LPDWORD build);
+
+	void ShowConsole();
+	void HideConsole();
 }
