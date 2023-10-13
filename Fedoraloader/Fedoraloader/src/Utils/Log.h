@@ -18,7 +18,7 @@ class Log
 	template<typename... Args>
 	static void LogPrefix(const std::string& prefix, std::format_string<Args...> fmt, Args&&... args)
 	{
-		std::cout << "[" << prefix << "] " << std::format(fmt, args...);
+		std::cout << "[" << prefix << "] " << std::format(fmt, args...) << std::endl;
 	}
 
 public:

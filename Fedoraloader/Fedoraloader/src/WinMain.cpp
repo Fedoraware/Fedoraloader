@@ -34,20 +34,21 @@ LaunchInfo GetLaunchInfo()
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd)
 {
+	Log::SetLevel(LogLevel::Info);
 	LaunchInfo launchInfo = GetLaunchInfo();
+
+	// Show debug console
+    if (launchInfo.Debug)
+    {
+	    Utils::ShowConsole();
+        Log::SetLevel(LogLevel::Debug);
+    }
 
     // Check privileges
     if (!Utils::IsElevated())
     {
         MessageBoxA(nullptr, "Please restart Fedoraloader as administrator!", "Missing elevation", MB_OK | MB_ICONWARNING);
 	    return 0;
-    }
-
-    // Show debug console
-    if (launchInfo.Debug)
-    {
-	    Utils::ShowConsole();
-        Log::Info("Debug console enabled");
     }
 
     try
