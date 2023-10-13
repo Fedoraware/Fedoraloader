@@ -40,7 +40,7 @@ Binary GetBinary(const LaunchInfo& launchInfo)
 
 void Loader::Run(const LaunchInfo& launchInfo)
 {
-	if (launchInfo.Debug)
+	if (launchInfo.UseLL)
 	{
 		Debug(launchInfo);
 	}

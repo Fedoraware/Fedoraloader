@@ -21,8 +21,6 @@ enum class PreferredAppMode
    Max
 };
 
-using TSetPreferredAppMode = PreferredAppMode(WINAPI)(PreferredAppMode appMode);
-
 // Action IDs
 enum ACTION_ID {
 	IDM_FIRST = 110,
@@ -128,6 +126,7 @@ void SetPreferredAppMode(PreferredAppMode mode)
 	Utils::GetVersionNumbers(&minor, &major, &buildNumber);
 	if (buildNumber < 18362) { return; }
 
+	using TSetPreferredAppMode = PreferredAppMode(WINAPI)(PreferredAppMode appMode);
 	static TSetPreferredAppMode* pSetPreferredAppMode = nullptr;
 	if (pSetPreferredAppMode == nullptr)
 	{

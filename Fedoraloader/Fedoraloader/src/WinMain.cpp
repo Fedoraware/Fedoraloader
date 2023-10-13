@@ -21,6 +21,7 @@ LaunchInfo GetLaunchInfo()
 
         CHECK_ARG("-silent", info.Silent)
         CHECK_ARG("-nobypass", info.NoBypass)
+        CHECK_ARG("-ll", info.UseLL)
         CHECK_ARG("-debug", info.Debug)
 
         CHECK_ARG_STR("-file", info.File)
