@@ -334,13 +334,14 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 		{
 			if (pSectionHeader->Misc.VirtualSize == 0) { continue; }
 
+			const auto name = reinterpret_cast<LPCSTR>(pSectionHeader->Name);
 			const DWORD flNewProtect = GetSectionProtection(pSectionHeader->Characteristics);
 			if (flNewProtect == PAGE_NOACCESS)
 			{
 				// Decommit NO_ACCESS pages
 				if (!VirtualFreeEx(hTarget, pTargetBase + pSectionHeader->VirtualAddress, pSectionHeader->Misc.VirtualSize, MEM_DECOMMIT))
 				{
-					std::printf("Failed to free NO_ACCESS section: %s", reinterpret_cast<char*>(pSectionHeader->Name));
+					Log::Warn("Failed to free NO_ACCESS section '{}'", name);
 					DebugBreak();
 				}
 			}
@@ -349,7 +350,7 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 				// Change protection
 				if (!VirtualProtectEx(hTarget, pTargetBase + pSectionHeader->VirtualAddress, pSectionHeader->Misc.VirtualSize, flNewProtect, &flOldProtect))
 				{
-					std::printf("Failed to set %s to %lX\n", reinterpret_cast<char*>(pSectionHeader->Name), flNewProtect);
+					Log::Warn("Failed to set section '{}' to {}", name, flNewProtect);
 					DebugBreak();
 				}
 			}
