@@ -36,10 +36,11 @@ LPCWSTR GetSteamPath()
 void Bypass::Run()
 {
 	// Close Steam and TF2
+	Log::Info("Closing Steam & TF2...");
 	ExitSteam();
 	Sleep(1000);
 
-	// Start steam
+	// Start Steam
 	const LPCWSTR steamPath = GetSteamPath();
 	const auto cmdLine = std::format(L"\"{:s}\" -applaunch 440", steamPath);
 	delete[] steamPath;
@@ -52,6 +53,7 @@ void Bypass::Run()
 	}
 
 	// Wait for Steam
+	Log::Info("Waiting for Steam...");
 	if (!Utils::WaitForModule(processInfo.dwProcessId, "steam.exe", 60))
 	{
 		CloseHandle(processInfo.hProcess);

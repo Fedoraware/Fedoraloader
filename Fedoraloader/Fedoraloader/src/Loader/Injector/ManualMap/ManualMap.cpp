@@ -179,16 +179,29 @@ DWORD GetSectionProtection(DWORD characteristics)
 	return protectionFlags[bExecute][bRead][bWrite];
 }
 
-void EraseMemory(HANDLE hTarget, LPVOID dest, SIZE_T size = 0)
+bool EraseMemory(HANDLE hTarget, LPVOID dest, SIZE_T size = 0)
 {
-	if (size == 0) { return; }
+	if (size == 0) { return false; }
 
 	DWORD flOldProtect;
 	const std::unique_ptr<BYTE> nullBuffer(new BYTE[size]{});
 
-	WriteProcessMemory(hTarget, dest, nullBuffer.get(), size, nullptr);
-	VirtualProtectEx(hTarget, dest, size, PAGE_NOACCESS, &flOldProtect);
-	VirtualFreeEx(hTarget, dest, size, MEM_DECOMMIT);
+	if (!WriteProcessMemory(hTarget, dest, nullBuffer.get(), size, nullptr))
+	{
+		return false;
+	}
+
+	if (!VirtualProtectEx(hTarget, dest, size, PAGE_NOACCESS, &flOldProtect))
+	{
+		return false;
+	}
+
+	if (!VirtualFreeEx(hTarget, dest, size, MEM_DECOMMIT))
+	{
+		return false;
+	}
+
+	return true;
 }
 
 bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
@@ -244,7 +257,7 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 			if (!WriteProcessMemory(hTarget, pTargetBase + pSectionHeader->VirtualAddress, pSrcData + pSectionHeader->PointerToRawData, pSectionHeader->SizeOfRawData, nullptr))
 			{
 				VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
-				throw std::runtime_error(std::format("Failed to map section: {}", reinterpret_cast<const char*>(pSectionHeader->Name)));
+				throw std::runtime_error(std::format("Failed to map section: {}", reinterpret_cast<LPCSTR>(pSectionHeader->Name)));
 			}
 		}
 	}
@@ -295,6 +308,7 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 	if (mainThread) { ResumeThread(mainThread); }
 
 	// Wait for the library loader
+	Log::Info("Waiting for LibraryLoader...");
 	if (WaitForSingleObject(hThread, 20 * 1000) != WAIT_OBJECT_0)
 	{
 		CloseHandle(hThread);
@@ -331,19 +345,21 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 	// (Optional) Adjust the section protection
 	if (ADJUST_PROTECTION)
 	{
+		Log::Info("Adjusting protections...");
+
 		pSectionHeader = IMAGE_FIRST_SECTION(ntHeaders);
 		for (UINT i = 0; i != fileHeader->NumberOfSections; i++, pSectionHeader++)
 		{
 			if (pSectionHeader->Misc.VirtualSize == 0) { continue; }
 
-			const auto name = reinterpret_cast<LPCSTR>(pSectionHeader->Name);
+			const auto sectionName = reinterpret_cast<LPCSTR>(pSectionHeader->Name);
 			const DWORD flNewProtect = GetSectionProtection(pSectionHeader->Characteristics);
 			if (flNewProtect == PAGE_NOACCESS)
 			{
 				// Decommit NO_ACCESS pages
 				if (!VirtualFreeEx(hTarget, pTargetBase + pSectionHeader->VirtualAddress, pSectionHeader->Misc.VirtualSize, MEM_DECOMMIT))
 				{
-					Log::Warn("Failed to free NO_ACCESS section '{}'", name);
+					Log::Warn("Failed to free NO_ACCESS section '{}'", sectionName);
 					DebugBreak();
 				}
 			}
@@ -352,7 +368,7 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 				// Change protection
 				if (!VirtualProtectEx(hTarget, pTargetBase + pSectionHeader->VirtualAddress, pSectionHeader->Misc.VirtualSize, flNewProtect, &flOldProtect))
 				{
-					Log::Warn("Failed to set section '{}' to {}", name, flNewProtect);
+					Log::Warn("Failed to set section '{}' to {}", sectionName, flNewProtect);
 					DebugBreak();
 				}
 			}
@@ -362,13 +378,19 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 	// (Optional) Clear unneeded sections
 	if (CLEAR_SECTIONS)
 	{
+		Log::Info("Clearing sections...");
+
 		pSectionHeader = IMAGE_FIRST_SECTION(ntHeaders);
 		for (UINT i = 0; i != fileHeader->NumberOfSections; ++i, ++pSectionHeader)
 		{
 			const DWORD discardable = pSectionHeader->Characteristics & IMAGE_SCN_MEM_DISCARDABLE;
 			if (pSectionHeader->Misc.VirtualSize && discardable)
 			{
-				EraseMemory(hTarget, pTargetBase + pSectionHeader->VirtualAddress, pSectionHeader->Misc.VirtualSize);
+				if (!EraseMemory(hTarget, pTargetBase + pSectionHeader->VirtualAddress, pSectionHeader->Misc.VirtualSize))
+				{
+					const auto sectionName = reinterpret_cast<LPCSTR>(pSectionHeader->Name);
+					Log::Warn("Failed to discard section '{}'", sectionName);
+				}
 			}
 		}
 	}
@@ -376,7 +398,12 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 	// (Optional) Clear PE header
 	if (ERASE_PEH)
 	{
-		EraseMemory(hTarget, pTargetBase, optHeader->SizeOfHeaders);
+		Log::Info("Erasing PE header...");
+
+		if (!EraseMemory(hTarget, pTargetBase, optHeader->SizeOfHeaders))
+		{
+			Log::Warn("Failed to erase PE header");
+		}
 	}
 
 	// Cleanup
