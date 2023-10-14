@@ -15,7 +15,7 @@ void ExitSteam()
 	Utils::WaitCloseProcess("steamwebhelper.exe");
 }
 
-LPCWSTR GetSteamPath()
+std::wstring GetSteamPath()
 {
 	HKEY hKey = nullptr;
 	if (RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\Valve\\Steam", 0, KEY_QUERY_VALUE, &hKey) != ERROR_SUCCESS)
@@ -30,7 +30,7 @@ LPCWSTR GetSteamPath()
 		throw std::runtime_error("Failed to query registry key value");
 	}
 
-	return Utils::CopyString(steamPath);
+	return steamPath;
 }
 
 void Bypass::Run()
@@ -41,9 +41,8 @@ void Bypass::Run()
 	Sleep(1000);
 
 	// Start Steam
-	const LPCWSTR steamPath = GetSteamPath();
+	const auto steamPath = GetSteamPath();
 	const auto cmdLine = std::format(L"\"{:s}\" -applaunch 440", steamPath);
-	delete[] steamPath;
 
 	STARTUPINFOW startupInfo = {};
     PROCESS_INFORMATION processInfo = {};

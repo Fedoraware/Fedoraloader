@@ -32,7 +32,7 @@ enum ACTION_ID {
 	IDM_EXIT
 };
 
-NOTIFYICONDATA g_NotifyData;
+NOTIFYICONDATAA g_NotifyData;
 WNDCLASS g_WindowClass;
 HWND g_WindowHandle;
 bool g_NoBypass = false;
@@ -53,9 +53,9 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			g_NotifyData.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP | NIF_INFO | NIF_REALTIME;
 			g_NotifyData.uCallbackMessage = WM_USER + 1;
 			g_NotifyData.hIcon = LoadIcon(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDR_ICON));
-			lstrcpy(g_NotifyData.szTip, TEXT("Fedoraloader"));
+			lstrcpyA(g_NotifyData.szTip, TEXT("Fedoraloader"));
 
-			Shell_NotifyIcon(NIM_ADD, &g_NotifyData);
+			Shell_NotifyIconA(NIM_ADD, &g_NotifyData);
 		}
 		return false;
 
@@ -96,14 +96,14 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_HELP:
 		{
-			ShellExecute(hWnd, nullptr, "https://github.com/Fedoraware/Fedoraloader", nullptr, nullptr, SW_SHOW);
+			ShellExecute(hWnd, nullptr, TEXT("https://github.com/Fedoraware/Fedoraloader"), nullptr, nullptr, SW_SHOW);
 		}
 		return false;
 
 	// Destroy the icon
 	case WM_DESTROY:
 		{
-			Shell_NotifyIcon(NIM_DELETE, &g_NotifyData);
+			Shell_NotifyIconA(NIM_DELETE, &g_NotifyData);
 			PostQuitMessage(0);
 		}
 		return false;
@@ -114,11 +114,11 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 BOOL ShowNotification(LPCSTR title, LPCSTR text, DWORD flags = NIIF_INFO)
 {
-	lstrcpy(g_NotifyData.szInfoTitle, title);
-	lstrcpy(g_NotifyData.szInfo, text);
+	lstrcpyA(g_NotifyData.szInfoTitle, title);
+	lstrcpyA(g_NotifyData.szInfo, text);
 	g_NotifyData.dwInfoFlags = flags;
 
-	return Shell_NotifyIcon(NIM_MODIFY, &g_NotifyData);
+	return Shell_NotifyIconA(NIM_MODIFY, &g_NotifyData);
 }
 
 void SetPreferredAppMode(PreferredAppMode mode)
@@ -132,7 +132,7 @@ void SetPreferredAppMode(PreferredAppMode mode)
 	static TSetPreferredAppMode* pSetPreferredAppMode = nullptr;
 	if (pSetPreferredAppMode == nullptr)
 	{
-		const HMODULE hUxTheme = LoadLibraryEx("uxtheme.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
+		const HMODULE hUxTheme = LoadLibraryEx(TEXT("uxtheme.dll"), nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
 		if (hUxTheme == nullptr) { return; }
 
 		const auto ord135 = GetProcAddress(hUxTheme, MAKEINTRESOURCEA(135));

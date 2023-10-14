@@ -1,11 +1,10 @@
 #include "Web.h"
 #include <wininet.h>
-#include <iostream>
 
 Binary Web::DownloadFile(const std::wstring& url)
 {
 	// Init WinINet
-	const HINTERNET hInternet = InternetOpenA("HTTP Request", INTERNET_OPEN_TYPE_DIRECT, nullptr, nullptr, 0);
+	const HINTERNET hInternet = InternetOpen(TEXT("HTTP Request"), INTERNET_OPEN_TYPE_DIRECT, nullptr, nullptr, 0);
 	if (!hInternet)
 	{
 		throw std::system_error(GetLastError(), std::system_category(), "Failed to initialize connection");

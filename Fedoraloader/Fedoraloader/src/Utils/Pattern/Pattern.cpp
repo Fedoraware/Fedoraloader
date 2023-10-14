@@ -8,7 +8,7 @@ struct Section
 	DWORD Size = 0x0;
 };
 
-bool CompareByteArray(PBYTE pData, const std::string& szPattern)
+inline bool CompareByteArray(PBYTE pData, const std::string& szPattern)
 {
 	for (size_t i = 0; i < szPattern.size(); i++, pData++)
 	{
@@ -45,7 +45,7 @@ std::optional<Section> GetCodeSection(DWORD modHandle)
 	auto pSection = IMAGE_FIRST_SECTION(ntHeaders);
 	for (int i = 0; i < ntHeaders->FileHeader.NumberOfSections; i++)
 	{
-		const auto sectionName = reinterpret_cast<const char*>(pSection->Name);
+		const auto sectionName = reinterpret_cast<LPCSTR>(pSection->Name);
 		if (strcmp(sectionName, ".text") == 0 && pSection->Characteristics & IMAGE_SCN_MEM_EXECUTE)
 		{
 			break;
