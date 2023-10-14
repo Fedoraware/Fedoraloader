@@ -238,7 +238,7 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 		throw std::runtime_error("Failed to write PE header to target");
 	}
 
-	Log::Debug("PE header @ {:p}", static_cast<void*>(pTargetBase));
+	Log::Debug("[MM] PE header @ {:p}", static_cast<void*>(pTargetBase));
 
 	// Init manual map data
 	const ManualMapData mapData{
@@ -279,7 +279,7 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 		throw std::runtime_error("Failed to write mapping data to target");
 	}
 
-	Log::Debug("Manual Map Data @ {:p}", static_cast<void*>(pMapData));
+	Log::Debug("[MM] Manual Map Data @ {:p}", static_cast<void*>(pMapData));
 
 	// Write library loader
 	const SIZE_T loaderSize = reinterpret_cast<DWORD>(Shellcode::Stub) - reinterpret_cast<DWORD>(Shellcode::LibraryLoader);
@@ -299,7 +299,7 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 		throw std::runtime_error("Failed to write library loader to target");
 	}
 
-	Log::Debug("Library Loader @ {:p}", static_cast<void*>(pLoader));
+	Log::Debug("[MM] Library Loader @ {:p}", static_cast<void*>(pLoader));
 
 	// Run the library loader
 	const HANDLE hThread = CreateRemoteThread(hTarget, nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(pLoader), pMapData, 0, nullptr);
@@ -314,7 +314,7 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 	if (mainThread) { ResumeThread(mainThread); }
 
 	// Wait for the library loader
-	Log::Info("Waiting for target thread...");
+	Log::Info("[MM] Waiting for target thread...");
 	if (WaitForSingleObject(hThread, 20 * 1000) != WAIT_OBJECT_0)
 	{
 		CloseHandle(hThread);
@@ -345,13 +345,13 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 			throw std::runtime_error("Manual map data was invalid");
 		}
 
-		Log::Debug("LibraryLoader result was: {:d}", static_cast<int>(resultData.Result));
+		Log::Debug("[MM] LibraryLoader result was: {:d}", static_cast<int>(resultData.Result));
 	}
 
 	// (Optional) Adjust the section protection
 	if (ADJUST_PROTECTION)
 	{
-		Log::Info("Adjusting protections...");
+		Log::Info("[MM] Adjusting protections...");
 
 		pSectionHeader = IMAGE_FIRST_SECTION(ntHeaders);
 		for (UINT i = 0; i != fileHeader->NumberOfSections; i++, pSectionHeader++)
@@ -365,7 +365,7 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 				// Decommit NO_ACCESS pages
 				if (!VirtualFreeEx(hTarget, pTargetBase + pSectionHeader->VirtualAddress, pSectionHeader->Misc.VirtualSize, MEM_DECOMMIT))
 				{
-					Log::Warn("Failed to free NO_ACCESS section '{}'", sectionName);
+					Log::Warn("[MM] Failed to free NO_ACCESS section '{}'", sectionName);
 					DebugBreak();
 				}
 			}
@@ -374,7 +374,7 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 				// Change protection
 				if (!VirtualProtectEx(hTarget, pTargetBase + pSectionHeader->VirtualAddress, pSectionHeader->Misc.VirtualSize, flNewProtect, &flOldProtect))
 				{
-					Log::Warn("Failed to set section '{}' to {}", sectionName, flNewProtect);
+					Log::Warn("[MM] Failed to set section '{}' to {}", sectionName, flNewProtect);
 					DebugBreak();
 				}
 			}
@@ -384,7 +384,7 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 	// (Optional) Clear unneeded sections
 	if (CLEAR_SECTIONS)
 	{
-		Log::Info("Clearing sections...");
+		Log::Info("[MM] Clearing sections...");
 
 		pSectionHeader = IMAGE_FIRST_SECTION(ntHeaders);
 		for (UINT i = 0; i != fileHeader->NumberOfSections; ++i, ++pSectionHeader)
@@ -395,7 +395,7 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 				if (!EraseMemory(hTarget, pTargetBase + pSectionHeader->VirtualAddress, pSectionHeader->Misc.VirtualSize))
 				{
 					const auto sectionName = reinterpret_cast<LPCSTR>(pSectionHeader->Name);
-					Log::Warn("Failed to discard section '{}'", sectionName);
+					Log::Warn("[MM] Failed to discard section '{}'", sectionName);
 				}
 			}
 		}
@@ -404,11 +404,11 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 	// (Optional) Clear PE header
 	if (ERASE_PEH)
 	{
-		Log::Info("Erasing PE header...");
+		Log::Info("[MM] Erasing PE header...");
 
 		if (!EraseMemory(hTarget, pTargetBase, optHeader->SizeOfHeaders))
 		{
-			Log::Warn("Failed to erase PE header");
+			Log::Warn("[MM] Failed to erase PE header");
 		}
 	}
 

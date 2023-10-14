@@ -35,7 +35,7 @@ Binary GetBinary(const LaunchInfo& launchInfo)
 	const auto dosHeader = reinterpret_cast<IMAGE_DOS_HEADER*>(binary.data());
 	if (dosHeader->e_magic == ZIP_SIGNATURE)
 	{
-		Log::Info("Zip file detected! Unpaking...");
+		Log::Info("Zip file detected! Unpacking...");
 		binary = Zip::UnpackFile(binary);
 	}
 
