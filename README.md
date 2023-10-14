@@ -50,7 +50,8 @@ To use them, create a shortcut to the loader and add the arguments to the target
 | --- | --- |
 | `-silent` | Run the loader without GUI |
 | `-nobypass` | Don't restart Steam with VAC-Bypass |
-| `-debug` | Use LoadLibrary-Injection (only works with local files) |
+| `-ll` | Use LoadLibrary-Injection (only works with local files) |
+| `-debug` | Show debug console |
 | `-file "..."` | Custom local file (.zip or .dll) |
 | `-url "..."` | Custom download URL (.zip or .dll) |
 
