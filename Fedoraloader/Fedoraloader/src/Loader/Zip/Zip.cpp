@@ -18,6 +18,7 @@ bool FindBySuffix(mz_zip_archive& archive, LPCSTR suffix, mz_uint& outIndex)
 		const auto curFile = std::string(fileStat.m_filename);
 		if (curFile.ends_with(suffix))
 		{
+			Log::Debug("[Zip] Found file '{}'", curFile);
 			outIndex = i;
 			return true;
 		}
@@ -56,5 +57,6 @@ Binary Zip::UnpackFile(const Binary& file)
 	mz_zip_reader_end(&zipArchive);
 
 	// Update the file
+	Log::Debug("[Zip] Extracted {:d} -> {:d} bytes", file.size(), bufferSize);
 	return {buffer, buffer + bufferSize};
 }

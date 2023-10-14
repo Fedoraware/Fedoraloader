@@ -42,6 +42,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     if (launchInfo.Debug)
     {
 	    Utils::ShowConsole();
+        Log::Info("Fedoraloader build: {}", __TIMESTAMP__);
     }
 
     // Apparently people are still using Windows 7 in 2023...
