@@ -1,6 +1,7 @@
 #pragma once
 #include <format>
 #include <iostream>
+#include <chrono>
 
 enum class LogLevel
 {
@@ -15,16 +16,28 @@ class Log
 {
 	inline static LogLevel Level = LogLevel::Debug;
 
+	static std::string GetTimeStamp()
+	{
+		const auto now = std::chrono::system_clock::now();
+		return std::format("{:%H:%M:%OS}", now);
+	}
+
+	static std::wstring GetTimeStampW()
+	{
+		const auto now = std::chrono::system_clock::now();
+		return std::format(L"{:%H:%M:%OS}", now);
+	}
+
 	template<typename... Args>
 	static void LogPrefix(const std::string& prefix, std::format_string<Args...> fmt, Args&&... args)
 	{
-		std::cout << "[" << prefix << "] " << std::format(fmt, std::forward<Args>(args)...) << std::endl;
+		std::cout << GetTimeStamp() << " [" << prefix << "] " << std::format(fmt, std::forward<Args>(args)...) << std::endl;
 	}
 
 	template<typename... Args>
 	static void LogPrefixW(const std::wstring& prefix, std::wformat_string<Args...> fmt, Args&&... args)
 	{
-		std::wcout << "[" << prefix << "] " << std::format(fmt, std::forward<Args>(args)...) << std::endl;
+		std::wcout << GetTimeStampW() << " [" << prefix << "] " << std::format(fmt, std::forward<Args>(args)...) << std::endl;
 	}
 
 public:
