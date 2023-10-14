@@ -19,13 +19,13 @@ class Log
 	static std::string GetTimeStamp()
 	{
 		const auto now = std::chrono::system_clock::now();
-		return std::format("{:%H:%M:%OS}", now);
+		return std::format("{:%T}", now);
 	}
 
 	static std::wstring GetTimeStampW()
 	{
 		const auto now = std::chrono::system_clock::now();
-		return std::format(L"{:%H:%M:%OS}", now);
+		return std::format(L"{:%T}", now);
 	}
 
 	template<typename... Args>

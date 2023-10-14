@@ -85,6 +85,8 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 			const int itemId = LOWORD(wParam);
 			const auto callback = g_MenuCallbacks.find(itemId);
+			Log::Debug("Tray: Received command {:d}", itemId);
+
 			if (callback != g_MenuCallbacks.end())
 			{
 				callback->second();
@@ -239,6 +241,7 @@ void Tray::Run(LaunchInfo& launchInfo, HINSTANCE hInstance)
 	g_NoBypass = launchInfo.NoBypass;
 	RegisterCallbacks(launchInfo);
 	CreateTray(hInstance);
+	Log::Info("Tray: Window created! Waiting for input...");
 
 	// Message loop
 	MSG windowMsg;

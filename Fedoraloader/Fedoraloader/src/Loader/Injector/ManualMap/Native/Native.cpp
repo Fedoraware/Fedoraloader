@@ -21,7 +21,7 @@ PBYTE InitRtlInsertInvertedFunctionTable()
 	{
 		if (const PBYTE result = Pattern::Find("ntdll.dll", pattern))
 		{
-			Log::Debug("RtlInsertInvertedFunctionTable @ {:p}", static_cast<void*>(result));
+			Log::Debug("Native: RtlInsertInvertedFunctionTable @ {:p}", static_cast<void*>(result));
 			return result;
 		}
 	}
@@ -30,8 +30,8 @@ PBYTE InitRtlInsertInvertedFunctionTable()
 	{
 		DWORD major, minor, buildNubmer;
 		Utils::GetVersionNumbers(&major, &minor, &buildNubmer);
-		Log::Warn("Failed to retrieve RtlInsertInvertedFunctionTable");
-		Log::Warn("Windows version: {:d}.{:d}.{:d}", major, minor, buildNubmer);
+		Log::Warn("Native: Failed to retrieve RtlInsertInvertedFunctionTable");
+		Log::Warn("Native: Version {:d}.{:d}.{:d}", major, minor, buildNubmer);
 		DebugBreak();
 	}
 

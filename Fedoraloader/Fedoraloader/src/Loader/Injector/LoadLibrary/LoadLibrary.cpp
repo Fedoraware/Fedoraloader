@@ -32,6 +32,8 @@ bool LL::Inject(HANDLE hTarget, LPCWSTR fileName)
 	    throw std::runtime_error("Failed to write library path");
     }
 
+	Log::Debug("LL: Library path @ {:p}", lpPathAddress);
+
 	// Load the dll
 	const HANDLE hThread = CreateRemoteThread(hTarget, nullptr, NULL, reinterpret_cast<LPTHREAD_START_ROUTINE>(LoadLibraryW), lpPathAddress, NULL, nullptr);
 	if (!hThread)
@@ -41,11 +43,13 @@ bool LL::Inject(HANDLE hTarget, LPCWSTR fileName)
 	}
 
 	// Wait for thread
+	Log::Info("Waiting for target thread...");
 	WaitForSingleObject(hThread, 15 * 1000);
 
 	// Cleanup
 	CloseHandle(hTarget);
 	VirtualFreeEx(hTarget, lpPathAddress, 0, MEM_RELEASE);
 
+	Log::Info("LL: Done!");
 	return true;
 }
