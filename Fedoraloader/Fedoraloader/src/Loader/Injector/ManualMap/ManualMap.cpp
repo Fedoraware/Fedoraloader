@@ -314,7 +314,7 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 	if (mainThread) { ResumeThread(mainThread); }
 
 	// Wait for the library loader
-	Log::Info("Waiting for LibraryLoader...");
+	Log::Info("Waiting for target thread...");
 	if (WaitForSingleObject(hThread, 20 * 1000) != WAIT_OBJECT_0)
 	{
 		CloseHandle(hThread);
@@ -345,7 +345,7 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 			throw std::runtime_error("Manual map data was invalid");
 		}
 
-		Log::Info("LibraryLoader result was: {:d}", static_cast<int>(resultData.Result));
+		Log::Debug("LibraryLoader result was: {:d}", static_cast<int>(resultData.Result));
 	}
 
 	// (Optional) Adjust the section protection

@@ -1,6 +1,5 @@
 #include "Utils.h"
 
-#include <assert.h>
 #include <fstream>
 #include <TlHelp32.h>
 
@@ -225,15 +224,15 @@ void Utils::ShowConsole()
 {
 	AllocConsole();
 	FILE* fDummy = nullptr;
-	assert(freopen_s(&fDummy, "CONIN$", "r", stdin) == 0);
-	assert(freopen_s(&fDummy, "CONOUT$", "w", stderr) == 0);
-	assert(freopen_s(&fDummy, "CONOUT$", "w", stdout) == 0);
+	freopen_s(&fDummy, "CONIN$", "r", stdin);
+	freopen_s(&fDummy, "CONOUT$", "w", stderr);
+	freopen_s(&fDummy, "CONOUT$", "w", stdout);
 }
 
 void Utils::HideConsole()
 {
-	assert(std::fclose(stdin) == 0);
-	assert(std::fclose(stderr) == 0);
-	assert(std::fclose(stdout) == 0);
+	std::fclose(stdin);
+	std::fclose(stderr);
+	std::fclose(stdout);
 	FreeConsole();
 }

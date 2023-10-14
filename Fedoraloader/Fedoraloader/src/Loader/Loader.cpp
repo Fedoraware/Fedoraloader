@@ -20,13 +20,13 @@ Binary GetBinary(const LaunchInfo& launchInfo)
 	// Read the file from web/disk
 	if (!launchInfo.File.empty())
 	{
-		Log::Info(L"Reading file: {}", launchInfo.File);
+		Log::Info(L"Reading file '{}'...", launchInfo.File);
 		binary = Utils::ReadBinaryFile(launchInfo.File);
 	}
 	else
 	{
 		const auto& url = launchInfo.URL.empty() ? ACTION_URL : launchInfo.URL;
-		Log::Info(L"Downloading file: {}", url);
+		Log::Info(L"Downloading file '{}'...", url);
 
 		binary = Web::DownloadFile(url);
 	}
@@ -87,7 +87,7 @@ bool Loader::Debug(const LaunchInfo& launchInfo)
 {
 	if (launchInfo.File.empty())
 	{
-		throw std::runtime_error("LoadLibrary required a file path");
+		throw std::runtime_error("LoadLibrary requires a file path");
 	}
 
 	// Find the game
@@ -99,6 +99,6 @@ bool Loader::Debug(const LaunchInfo& launchInfo)
 	}
 
 	// Inject the binary
-	Log::Info(L"Running LoadLibrary with file {}", launchInfo.File);
+	Log::Info(L"Running LoadLibrary with file '{}'...", launchInfo.File);
 	return LL::Inject(hGame, launchInfo.File.c_str());
 }
