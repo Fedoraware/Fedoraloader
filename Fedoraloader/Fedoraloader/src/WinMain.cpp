@@ -35,21 +35,19 @@ LaunchInfo GetLaunchInfo()
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd)
 {
-	Log::SetLevel(LogLevel::Info);
-
+	Log::SetLevel(LogLevel::Debug);
 	LaunchInfo launchInfo = GetLaunchInfo();
-
-    // Apparently people are still using Windows 7 in 2023...
-    if (!IsWindows8OrGreater())
-    {
-	    MessageBoxA(nullptr, "Your Windows version is outdated and will most likely not work!", "Outdated OS", MB_OK | MB_ICONWARNING);
-    }
 
 	// Show debug console
     if (launchInfo.Debug)
     {
 	    Utils::ShowConsole();
-        Log::SetLevel(LogLevel::Debug);
+    }
+
+    // Apparently people are still using Windows 7 in 2023...
+    if (!IsWindows8OrGreater())
+    {
+	    MessageBoxA(nullptr, "Your Windows version is outdated and will most likely not work!", "Outdated OS", MB_OK | MB_ICONWARNING);
     }
 
     // Check privileges

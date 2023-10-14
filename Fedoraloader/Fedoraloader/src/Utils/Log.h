@@ -36,15 +36,20 @@ public:
 	template<typename... Args>
 	static void Debug(const std::format_string<Args...> fmt, Args&&... args)
 	{
+#ifdef _DEBUG
 		if (Level > LogLevel::Debug) { return; }
 		LogPrefix("Debug", fmt, std::forward<Args>(args)...);
+#endif
 	}
 
 	template<typename... Args>
 	static void Debug(const std::wformat_string<Args...> fmt, Args&&... args)
 	{
+
+#ifdef _DEBUG
 		if (Level > LogLevel::Debug) { return; }
 		LogPrefixW(L"Debug", fmt, std::forward<Args>(args)...);
+#endif
 	}
 
 	template<typename... Args>

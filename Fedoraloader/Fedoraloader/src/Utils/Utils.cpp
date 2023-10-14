@@ -224,7 +224,7 @@ void Utils::GetVersionNumbers(LPDWORD major, LPDWORD minor, LPDWORD build)
 void Utils::ShowConsole()
 {
 	AllocConsole();
-	FILE* fDummy;
+	FILE* fDummy = nullptr;
 	assert(freopen_s(&fDummy, "CONIN$", "r", stdin) == 0);
 	assert(freopen_s(&fDummy, "CONOUT$", "w", stderr) == 0);
 	assert(freopen_s(&fDummy, "CONOUT$", "w", stdout) == 0);
