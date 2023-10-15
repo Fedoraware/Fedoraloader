@@ -14,15 +14,16 @@
 
 enum class PreferredAppMode
 {
-   Default,
-   AllowDark,
-   ForceDark,
-   ForceLight,
-   Max
+	Default,
+	AllowDark,
+	ForceDark,
+	ForceLight,
+	Max
 };
 
 // Action IDs
-enum ACTION_ID {
+enum ACTION_ID
+{
 	IDM_FIRST = 110,
 
 	IDM_LOAD = IDM_FIRST,

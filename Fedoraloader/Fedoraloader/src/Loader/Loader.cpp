@@ -6,7 +6,6 @@
 #include "Injector/ManualMap/ManualMap.h"
 #include "../Utils/Utils.h"
 
-#include <fstream>
 #include <stdexcept>
 
 constexpr WORD ZIP_SIGNATURE = 0x4B50;

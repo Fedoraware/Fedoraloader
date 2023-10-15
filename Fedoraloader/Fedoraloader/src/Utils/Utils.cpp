@@ -3,17 +3,19 @@
 #include <fstream>
 #include <TlHelp32.h>
 
-DWORD Utils::FindProcess(const char* procName)
+DWORD Utils::FindProcess(LPCSTR procName)
 {
 	DWORD processId = 0;
 
 	PROCESSENTRY32 procEntry{};
 	procEntry.dwSize = sizeof(procEntry);
 
+	// Get snapshot of processes
 	const HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 	if (hSnapshot == INVALID_HANDLE_VALUE) { return 0; }
 	if (!Process32First(hSnapshot, &procEntry)) { return 0; }
 
+	// Find the desired process
 	do
 	{
 		if (_strcmpi(procEntry.szExeFile, procName) == 0)
@@ -28,7 +30,7 @@ DWORD Utils::FindProcess(const char* procName)
 	return processId;
 }
 
-HANDLE Utils::GetProcessHandle(const char* procName)
+HANDLE Utils::GetProcessHandle(LPCSTR procName)
 {
 	const DWORD pid = FindProcess(procName);
 	if (pid == 0) { return nullptr; }
@@ -37,7 +39,7 @@ HANDLE Utils::GetProcessHandle(const char* procName)
 	return hProc;
 }
 
-DWORD Utils::WaitForProcess(const char* procName, DWORD sTimeout)
+DWORD Utils::WaitForProcess(LPCSTR procName, DWORD sTimeout)
 {
 	const auto startTime = GetTickCount64();
 	DWORD processId = 0;
@@ -59,7 +61,7 @@ DWORD Utils::WaitForProcess(const char* procName, DWORD sTimeout)
 	return 0;
 }
 
-HANDLE Utils::WaitForProcessHandle(const char* procName, DWORD sTimeout)
+HANDLE Utils::WaitForProcessHandle(LPCSTR procName, DWORD sTimeout)
 {
 	const auto startTime = GetTickCount64();
 	HANDLE hProc = nullptr;
@@ -81,7 +83,7 @@ HANDLE Utils::WaitForProcessHandle(const char* procName, DWORD sTimeout)
 	return nullptr;
 }
 
-bool Utils::WaitCloseProcess(const char* procName, DWORD sTimeout)
+bool Utils::WaitCloseProcess(LPCSTR procName, DWORD sTimeout)
 {
 	const HANDLE hProc = GetProcessHandle(procName);
 	if (hProc == nullptr || hProc == INVALID_HANDLE_VALUE) { return false; }
@@ -105,22 +107,23 @@ bool Utils::WaitForModule(DWORD processId, LPCSTR moduleName, DWORD sTimeout)
 		if (moduleSnapshot == INVALID_HANDLE_VALUE) { continue; }
 
 		MODULEENTRY32 moduleEntry;
-        moduleEntry.dwSize = sizeof(moduleEntry);
+		moduleEntry.dwSize = sizeof(moduleEntry);
 
 		// Find the target module
 		if (Module32First(moduleSnapshot, &moduleEntry))
 		{
-            do
+			do
 			{
-                if (!_strcmpi(moduleEntry.szModule, moduleName))
+				if (!_strcmpi(moduleEntry.szModule, moduleName))
 				{
-                    moduleFound = true;
-                    break;
-                }
-            } while (Module32Next(moduleSnapshot, &moduleEntry));
-        }
+					moduleFound = true;
+					break;
+				}
+			}
+			while (Module32Next(moduleSnapshot, &moduleEntry));
+		}
 
-        CloseHandle(moduleSnapshot);
+		CloseHandle(moduleSnapshot);
 
 		// Check timeout
 		const auto currentTime = GetTickCount64();
@@ -189,18 +192,6 @@ bool Utils::IsElevated()
 
 	CloseHandle(hToken);
 	return elevation.TokenIsElevated != 0;
-}
-
-LPCWSTR Utils::CopyString(LPCWSTR src)
-{
-	const SIZE_T size = std::wcslen(src);
-	const auto dest = new WCHAR[size + 1];
-	if (!dest) { return nullptr; }
-
-	const auto err = wcsncpy_s(dest, size + 1, src, size);
-	if (err != 0) { return nullptr; }
-
-	return dest;
 }
 
 void Utils::GetVersionNumbers(LPDWORD major, LPDWORD minor, LPDWORD build)

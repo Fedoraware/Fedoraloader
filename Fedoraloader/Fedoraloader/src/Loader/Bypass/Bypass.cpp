@@ -45,7 +45,7 @@ void Bypass::Run()
 	const auto cmdLine = std::format(L"\"{:s}\" -applaunch 440", steamPath);
 
 	STARTUPINFOW startupInfo = {};
-    PROCESS_INFORMATION processInfo = {};
+	PROCESS_INFORMATION processInfo = {};
 	if (!CreateProcessW(nullptr, const_cast<LPWSTR>(cmdLine.c_str()), nullptr, nullptr, FALSE, 0, nullptr, nullptr, &startupInfo, &processInfo))
 	{
 		throw std::system_error(GetLastError(), std::system_category(), "Failed to launch Steam");
