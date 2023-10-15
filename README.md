@@ -1,4 +1,4 @@
-# Fedoraloader v2
+# Fedoraloader
 
 [![Downloads](https://img.shields.io/github/downloads/Fedoraware/Fedoraloader/total?style=for-the-badge&logo=github&color=blue)](https://github.com/Fedoraware/Fedoraloader/releases/latest)
 
@@ -6,11 +6,11 @@ Fedoraloader is an easy-to-use loader for the free and open-source cheat [Fedora
 It automatically downloads and injects the latest Fedoraware build into your game.
 Optionally, Fedoraloader can also restart Steam and inject a VAC-Bypass to prevent bans.
 
-This is a complete rewrite in C++ 20 of Fedoraloader in an attempt to fix previous issue and make the injection process as streamlined as possible.
-The previous version was written in C# and can be found [here](https://github.com/Fedoraware/Fedoraloader-Legacy).
+This is a complete rewrite of Fedoraloader in C++20 that focuses on fixing previous issues and making the injection process as streamlined as possible.
+The old version was written in C# and can be found [here](https://github.com/Fedoraware/Fedoraloader-Legacy).
 
 > [!NOTE]  
-> VAC-Bypass is enabled by default and might cause issues with other games such as CS2.
+> VAC-Bypass is enabled by default and might cause issues with other games such as CS2 and Dota.
 
 ## Usage
 
@@ -50,10 +50,10 @@ To use them, create a shortcut to the loader and add the arguments to the target
 | --- | --- |
 | `-silent` | Run the loader without GUI |
 | `-nobypass` | Don't restart Steam with VAC-Bypass |
-| `-ll` | Use LoadLibrary-Injection (only works with local files) |
+| `-ll` | Use LoadLibrary-Injection *(only works with local files)* |
 | `-debug` | Show debug console |
-| `-file "..."` | Custom local file (.zip or .dll) |
-| `-url "..."` | Custom download URL (.zip or .dll) |
+| `-file "..."` | Custom local file *(.zip or .dll)* |
+| `-url "..."` | Custom download URL *(.zip or .dll)* |
 
 ## Credits
 
