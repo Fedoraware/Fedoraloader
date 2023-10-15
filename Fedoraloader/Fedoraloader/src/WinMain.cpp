@@ -5,8 +5,8 @@
 
 #include <VersionHelpers.h>
 
-#define CHECK_ARG(szArg, bOut) if (wcscmp(arg, L##szArg) == 0) { (bOut) = true; continue; }
-#define CHECK_ARG_STR(szArg, szOut) if (wcscmp(arg, L##szArg) == 0 && i < nArgs - 1) { const auto nextArg = szArglist[++i]; (szOut) = std::wstring(nextArg); continue; }
+#define CHECK_ARG(szArg, bOut) if (_wcsicmp(arg, L##szArg) == 0) { (bOut) = true; continue; }
+#define CHECK_ARG_STR(szArg, szOut) if (_wcsicmp(arg, L##szArg) == 0 && ++i < nArgs) { const auto nextArg = szArglist[i]; (szOut) = std::wstring(nextArg); continue; }
 
 LaunchInfo GetLaunchInfo()
 {
