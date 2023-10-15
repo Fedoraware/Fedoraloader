@@ -256,10 +256,12 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 
 		if (pSectionHeader->Characteristics & (IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE))
 		{
+			const auto sectionName = reinterpret_cast<LPCSTR>(pSectionHeader->Name);
+			Log::Debug("MM: Writing section '{}'...", sectionName);
 			if (!WriteProcessMemory(hTarget, pTargetBase + pSectionHeader->VirtualAddress, pSrcData + pSectionHeader->PointerToRawData, pSectionHeader->SizeOfRawData, nullptr))
 			{
 				VirtualFreeEx(hTarget, pTargetBase, 0, MEM_RELEASE);
-				throw std::runtime_error(std::format("Failed to map section: {}", reinterpret_cast<LPCSTR>(pSectionHeader->Name)));
+				throw std::runtime_error(std::format("Failed to map section: {}", sectionName));
 			}
 		}
 	}
@@ -392,9 +394,10 @@ bool MM::Inject(HANDLE hTarget, const Binary& binary, HANDLE mainThread)
 			const DWORD discardable = pSectionHeader->Characteristics & IMAGE_SCN_MEM_DISCARDABLE;
 			if (pSectionHeader->Misc.VirtualSize && discardable)
 			{
+				const auto sectionName = reinterpret_cast<LPCSTR>(pSectionHeader->Name);
+				Log::Debug("MM: Discarding section '{}'...", sectionName);
 				if (!EraseMemory(hTarget, pTargetBase + pSectionHeader->VirtualAddress, pSectionHeader->Misc.VirtualSize))
 				{
-					const auto sectionName = reinterpret_cast<LPCSTR>(pSectionHeader->Name);
 					Log::Warn("MM: Failed to discard section '{}'", sectionName);
 				}
 			}
