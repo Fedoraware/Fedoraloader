@@ -2,7 +2,7 @@
 
 [![Downloads](https://img.shields.io/github/downloads/Fedoraware/Fedoraloader/total?style=for-the-badge&logo=github&color=blue)](https://github.com/Fedoraware/Fedoraloader/releases/latest)
 
-Fedoraloader is an easy-to-use loader for the free and open-source cheat [Fedoraware](https://github.com/Fedoraware/Fedoraware).
+Fedoraloader is an easy-to-use loader for the free and open-source training software [Fedoraware](https://github.com/Fedoraware/Fedoraware).
 It automatically downloads and injects the latest Fedoraware build into your game.
 Optionally, Fedoraloader can also restart Steam and inject a VAC-Bypass to prevent bans.
 
