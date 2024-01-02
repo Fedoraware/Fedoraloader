@@ -47,14 +47,15 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     // Apparently people are still using Windows 7 in 2023...
     if (!IsWindows8OrGreater())
     {
-	    MessageBoxA(nullptr, "Your Windows version is outdated and will most likely not work!", "Outdated OS", MB_OK | MB_ICONWARNING);
+	    MessageBoxA(nullptr, "Your Windows version is no longer supported!\nPlease upgrade to Windows 8 or above.", "Outdated OS", MB_OK | MB_ICONWARNING);
+        return EXIT_FAILURE;
     }
 
     // Check privileges
     if (!Utils::IsElevated())
     {
         MessageBoxA(nullptr, "Please restart Fedoraloader as administrator!", "Missing elevation", MB_OK | MB_ICONWARNING);
-	    return 0;
+	    return EXIT_FAILURE;
     }
 
     try
